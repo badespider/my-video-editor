@@ -279,6 +279,7 @@ class VideoAgent:
     def _verify_video_final_plan(self, final_plan: Dict[str, Any]) -> None:
         """
         Perform final validation on the video processing result.
+        Rule 4.1: Validate coverage in run_with_video
         
         Args:
             final_plan: The final video processing result
@@ -297,7 +298,15 @@ class VideoAgent:
         if not final_video_path:
             raise ValueError("Final video path cannot be empty")
         
-        logger.info(f"Video final plan validated: {final_video_path}")
+        # Rule 4.1: Validate coverage requirement
+        coverage_percentage = final_plan.get("coverage_percentage", 0)
+        if coverage_percentage < config.MIN_COVERAGE_PERCENTAGE / 100.0:
+            raise ValueError(
+                f"Coverage {coverage_percentage:.1%} below minimum requirement "
+                f"{config.MIN_COVERAGE_PERCENTAGE}%"
+            )
+        
+        logger.info(f"Video final plan validated: {final_video_path}, coverage: {coverage_percentage:.1%}")
 
     def run_with_video(self, video_path: str) -> Dict[str, Any]:
         """
@@ -375,6 +384,8 @@ class VideoAgent:
             # Add video source information to the final plan
             final_plan["source_video"] = video_path
             final_plan["processing_type"] = "video_analysis"
+            final_plan["coverage_percentage"] = video_analysis.get("coverage_percentage", 0)
+            final_plan["scene_count"] = video_analysis.get("scene_count", 0)
             
             # Final validation for video processing (different format)
             self._verify_video_final_plan(final_plan)
