@@ -24,10 +24,12 @@ class ScriptRequest(BaseModel):
 
 class VideoResponse(BaseModel):
     """Response model for video plan."""
-    clips: list
-    narrations: list
-    bgms: list
-    timeline: str
+    clips: dict
+    narrations: dict
+    bgms: dict
+    timeline: list
+    total_duration: float
+    assembly_metadata: dict
 
 
 @app.get("/")
@@ -36,20 +38,28 @@ async def root():
     return {"message": "AI Video Creation API"}
 
 
-@app.post("/create-video", response_model=VideoResponse)
-async def create_video(request: ScriptRequest):
+@app.post("/generate", response_model=VideoResponse)
+async def generate_video(request: ScriptRequest):
     """
-    Create a video plan from the provided script.
+    Generate a video plan from the provided script and return final JSON.
+    
+    Args:
+        request: ScriptRequest containing script text and optional model override
+        
+    Returns:
+        VideoResponse: Final JSON with clips, narrations, bgms, and timeline
     """
     try:
         agent = VideoAgent(model=request.model)
         result = agent.run(request.script)
         
         return VideoResponse(
-            clips=result.get("clips", []),
-            narrations=result.get("narrations", []),
-            bgms=result.get("bgms", []),
-            timeline=result.get("timeline", "")
+            clips=result.get("clips", {}),
+            narrations=result.get("narrations", {}),
+            bgms=result.get("bgms", {}),
+            timeline=result.get("timeline", []),
+            total_duration=result.get("total_duration", 0.0),
+            assembly_metadata=result.get("assembly_metadata", {})
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

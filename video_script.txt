@@ -1,0 +1,20 @@
+Video Analysis: Real Video Processing
+
+I have a video file recorded on July 1st, 2025 at 6:56 PM (2025-07-01 18-56-24.mkv) that needs to be analyzed for creating an AI-generated video production plan.
+
+The video contains:
+- Real-time footage captured at a specific moment
+- Visual elements that need professional editing consideration  
+- Content suitable for AI-driven video production workflow
+- Scenes that require intelligent clip selection and timing
+- Background elements that need BGM matching
+- Narration opportunities for professional voice-over
+
+This analysis will help create a comprehensive video production plan including:
+1. Scene breakdown and timing
+2. Clip selection for maximum impact
+3. Narration script development
+4. Background music recommendations
+5. Final assembly timeline
+
+The goal is to transform raw video footage into a professionally structured video plan ready for production.

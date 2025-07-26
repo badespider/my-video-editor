@@ -1,0 +1,171 @@
+{
+  "clips": {
+    "clips": [
+      {
+        "id": 1,
+        "description": "Clip for Real-time footage captured at specific moment...",
+        "duration": 10,
+        "mood": "neutral",
+        "scene_id": 1
+      },
+      {
+        "id": 2,
+        "description": "Clip for Visual elements for professional editing considera...",
+        "duration": 10,
+        "mood": "neutral",
+        "scene_id": 2
+      },
+      {
+        "id": 3,
+        "description": "Clip for AI-driven video production workflow in action...",
+        "duration": 10,
+        "mood": "neutral",
+        "scene_id": 3
+      },
+      {
+        "id": 4,
+        "description": "Clip for Intelligent clip selection and timing showcase...",
+        "duration": 10,
+        "mood": "neutral",
+        "scene_id": 4
+      },
+      {
+        "id": 5,
+        "description": "Clip for Background elements for BGM matching highlighted...",
+        "duration": 10,
+        "mood": "neutral",
+        "scene_id": 5
+      },
+      {
+        "id": 6,
+        "description": "Clip for Narration opportunities for professional voice-ove...",
+        "duration": 10,
+        "mood": "neutral",
+        "scene_id": 6
+      }
+    ]
+  },
+  "narrations": {
+    "narration": "As the story unfolds, Real-time footage captured at specific moment. As the story unfolds, Visual elements for professional editing considera. As the story unfolds, AI-driven video production workflow in action. As the story unfolds, Intelligent clip selection and timing showcase. As the story unfolds, Background elements for BGM matching highlighted. As the story unfolds, Narration opportunities for professional voice-ove.",
+    "word_count": 59
+  },
+  "bgms": {
+    "bgm_options": [
+      "Light classical with moderate tempo",
+      "Gentle instrumental background music",
+      "Soft ambient atmospheric sounds"
+    ],
+    "mood_analysis": {
+      "neutral": 6
+    }
+  },
+  "timeline": [
+    {
+      "time": 0.0,
+      "event": "bgm_start",
+      "description": "Start background music: Light classical with moderate tempo",
+      "duration": 60
+    },
+    {
+      "time": 0.0,
+      "event": "narration_start",
+      "description": "Begin narration: As the story unfolds, Real-time footage captured at specific moment. As the story unfolds, Visual el...",
+      "duration": 60
+    },
+    {
+      "time": 0.0,
+      "event": "clip_start",
+      "clip_id": 1,
+      "description": "Clip for Real-time footage captured at specific moment...",
+      "mood": "neutral",
+      "duration": 10
+    },
+    {
+      "time": 10.0,
+      "event": "clip_end",
+      "clip_id": 1
+    },
+    {
+      "time": 10.0,
+      "event": "clip_start",
+      "clip_id": 2,
+      "description": "Clip for Visual elements for professional editing considera...",
+      "mood": "neutral",
+      "duration": 10
+    },
+    {
+      "time": 20.0,
+      "event": "clip_end",
+      "clip_id": 2
+    },
+    {
+      "time": 20.0,
+      "event": "clip_start",
+      "clip_id": 3,
+      "description": "Clip for AI-driven video production workflow in action...",
+      "mood": "neutral",
+      "duration": 10
+    },
+    {
+      "time": 30.0,
+      "event": "clip_end",
+      "clip_id": 3
+    },
+    {
+      "time": 30.0,
+      "event": "clip_start",
+      "clip_id": 4,
+      "description": "Clip for Intelligent clip selection and timing showcase...",
+      "mood": "neutral",
+      "duration": 10
+    },
+    {
+      "time": 40.0,
+      "event": "clip_end",
+      "clip_id": 4
+    },
+    {
+      "time": 40.0,
+      "event": "clip_start",
+      "clip_id": 5,
+      "description": "Clip for Background elements for BGM matching highlighted...",
+      "mood": "neutral",
+      "duration": 10
+    },
+    {
+      "time": 50.0,
+      "event": "clip_end",
+      "clip_id": 5
+    },
+    {
+      "time": 50.0,
+      "event": "clip_start",
+      "clip_id": 6,
+      "description": "Clip for Narration opportunities for professional voice-ove...",
+      "mood": "neutral",
+      "duration": 10
+    },
+    {
+      "time": 60.0,
+      "event": "clip_end",
+      "clip_id": 6
+    },
+    {
+      "time": 60.0,
+      "event": "narration_end",
+      "description": "End narration"
+    },
+    {
+      "time": 60.0,
+      "event": "bgm_end",
+      "description": "Fade out background music"
+    }
+  ],
+  "total_duration": 60.0,
+  "assembly_metadata": {
+    "clip_count": 6,
+    "narration_word_count": 59,
+    "bgm_options_count": 3,
+    "created_at": "MVP_timestamp"
+  }
+}

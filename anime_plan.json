@@ -1,0 +1,174 @@
+{
+  "clips": {
+    "clips": [
+      {
+        "id": 1,
+        "description": "Clip for Main character's dramatic confrontation with antag...",
+        "duration": 120,
+        "mood": "neutral",
+        "scene_id": 1
+      },
+      {
+        "id": 2,
+        "description": "Clip for Flashback revealing the protagonist's tragic backs...",
+        "duration": 120,
+        "mood": "sad",
+        "scene_id": 2
+      },
+      {
+        "id": 3,
+        "description": "Clip for Intense battle scene between two rival factions in...",
+        "duration": 120,
+        "mood": "intense",
+        "scene_id": 3
+      },
+      {
+        "id": 4,
+        "description": "Clip for Emotional reunion between separated siblings on a ...",
+        "duration": 120,
+        "mood": "neutral",
+        "scene_id": 4
+      },
+      {
+        "id": 5,
+        "description": "Clip for Training montage showcasing the protagonist's grow...",
+        "duration": 120,
+        "mood": "neutral",
+        "scene_id": 5
+      },
+      {
+        "id": 6,
+        "description": "Clip for Mysterious ritual performed by a cloaked figure at...",
+        "duration": 120,
+        "mood": "mysterious",
+        "scene_id": 6
+      }
+    ]
+  },
+  "narrations": {
+    "narration": "As the story unfolds, Main character's dramatic confrontation with antag. With heavy hearts, Flashback revealing the protagonist's tragic backs. In a dramatic turn of events, Intense battle scene between two rival factions in. As the story unfolds, Emotional reunion between separated siblings on a . As the story unfolds, Training montage showcasing the protagonist's grow. In the shadows, Mysterious ritual performed by a cloaked figure at.",
+    "word_count": 66
+  },
+  "bgms": {
+    "bgm_options": [
+      "Gentle instrumental background music",
+      "Soft ambient atmospheric sounds",
+      "Light classical with moderate tempo"
+    ],
+    "mood_analysis": {
+      "neutral": 3,
+      "sad": 1,
+      "intense": 1,
+      "mysterious": 1
+    }
+  },
+  "timeline": [
+    {
+      "time": 0.0,
+      "event": "bgm_start",
+      "description": "Start background music: Gentle instrumental background music",
+      "duration": 720
+    },
+    {
+      "time": 0.0,
+      "event": "narration_start",
+      "description": "Begin narration: As the story unfolds, Main character's dramatic confrontation with antag. With heavy hearts, Flashba...",
+      "duration": 720
+    },
+    {
+      "time": 0.0,
+      "event": "clip_start",
+      "clip_id": 1,
+      "description": "Clip for Main character's dramatic confrontation with antag...",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 120.0,
+      "event": "clip_end",
+      "clip_id": 1
+    },
+    {
+      "time": 120.0,
+      "event": "clip_start",
+      "clip_id": 2,
+      "description": "Clip for Flashback revealing the protagonist's tragic backs...",
+      "mood": "sad",
+      "duration": 120
+    },
+    {
+      "time": 240.0,
+      "event": "clip_end",
+      "clip_id": 2
+    },
+    {
+      "time": 240.0,
+      "event": "clip_start",
+      "clip_id": 3,
+      "description": "Clip for Intense battle scene between two rival factions in...",
+      "mood": "intense",
+      "duration": 120
+    },
+    {
+      "time": 360.0,
+      "event": "clip_end",
+      "clip_id": 3
+    },
+    {
+      "time": 360.0,
+      "event": "clip_start",
+      "clip_id": 4,
+      "description": "Clip for Emotional reunion between separated siblings on a ...",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 480.0,
+      "event": "clip_end",
+      "clip_id": 4
+    },
+    {
+      "time": 480.0,
+      "event": "clip_start",
+      "clip_id": 5,
+      "description": "Clip for Training montage showcasing the protagonist's grow...",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 600.0,
+      "event": "clip_end",
+      "clip_id": 5
+    },
+    {
+      "time": 600.0,
+      "event": "clip_start",
+      "clip_id": 6,
+      "description": "Clip for Mysterious ritual performed by a cloaked figure at...",
+      "mood": "mysterious",
+      "duration": 120
+    },
+    {
+      "time": 720.0,
+      "event": "clip_end",
+      "clip_id": 6
+    },
+    {
+      "time": 720.0,
+      "event": "narration_end",
+      "description": "End narration"
+    },
+    {
+      "time": 720.0,
+      "event": "bgm_end",
+      "description": "Fade out background music"
+    }
+  ],
+  "total_duration": 720.0,
+  "assembly_metadata": {
+    "clip_count": 6,
+    "narration_word_count": 66,
+    "bgm_options_count": 3,
+    "created_at": "MVP_timestamp"
+  }
+}

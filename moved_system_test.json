@@ -1,0 +1,112 @@
+{
+  "clips": {
+    "clips": [
+      {
+        "id": 1,
+        "description": "Clip for Detective arrives at foggy city scene...",
+        "duration": 120,
+        "mood": "neutral",
+        "scene_id": 1
+      },
+      {
+        "id": 2,
+        "description": "Clip for Investigation begins in dark alleyways...",
+        "duration": 120,
+        "mood": "mysterious",
+        "scene_id": 2
+      },
+      {
+        "id": 3,
+        "description": "Clip for Neon lights illuminate the mystery...",
+        "duration": 120,
+        "mood": "neutral",
+        "scene_id": 3
+      }
+    ]
+  },
+  "narrations": {
+    "narration": "As the story unfolds, Detective arrives at foggy city scene. In the shadows, Investigation begins in dark alleyways. As the story unfolds, Neon lights illuminate the mystery.",
+    "word_count": 27
+  },
+  "bgms": {
+    "bgm_options": [
+      "Soft ambient atmospheric sounds",
+      "Gentle instrumental background music",
+      "Light classical with moderate tempo"
+    ],
+    "mood_analysis": {
+      "neutral": 2,
+      "mysterious": 1
+    }
+  },
+  "timeline": [
+    {
+      "time": 0.0,
+      "event": "bgm_start",
+      "description": "Start background music: Soft ambient atmospheric sounds",
+      "duration": 360
+    },
+    {
+      "time": 0.0,
+      "event": "narration_start",
+      "description": "Begin narration: As the story unfolds, Detective arrives at foggy city scene. In the shadows, Investigation begins in...",
+      "duration": 360
+    },
+    {
+      "time": 0.0,
+      "event": "clip_start",
+      "clip_id": 1,
+      "description": "Clip for Detective arrives at foggy city scene...",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 120.0,
+      "event": "clip_end",
+      "clip_id": 1
+    },
+    {
+      "time": 120.0,
+      "event": "clip_start",
+      "clip_id": 2,
+      "description": "Clip for Investigation begins in dark alleyways...",
+      "mood": "mysterious",
+      "duration": 120
+    },
+    {
+      "time": 240.0,
+      "event": "clip_end",
+      "clip_id": 2
+    },
+    {
+      "time": 240.0,
+      "event": "clip_start",
+      "clip_id": 3,
+      "description": "Clip for Neon lights illuminate the mystery...",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 360.0,
+      "event": "clip_end",
+      "clip_id": 3
+    },
+    {
+      "time": 360.0,
+      "event": "narration_end",
+      "description": "End narration"
+    },
+    {
+      "time": 360.0,
+      "event": "bgm_end",
+      "description": "Fade out background music"
+    }
+  ],
+  "total_duration": 360.0,
+  "assembly_metadata": {
+    "clip_count": 3,
+    "narration_word_count": 27,
+    "bgm_options_count": 3,
+    "created_at": "MVP_timestamp"
+  }
+}
