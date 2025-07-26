@@ -1,0 +1,3 @@
+game-by-virtuals
+fastapi
+uvicorn[standard]
