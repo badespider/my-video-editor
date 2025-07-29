@@ -8,6 +8,7 @@ import sys
 import json
 import os
 from coordinator import VideoAgent
+from utils import cleanup_mocks
 import config
 
 
@@ -102,8 +103,10 @@ def main():
             print("\nRunning video creation pipeline...")
             result = agent.run(script)
 
-        # Format output as JSON
-        json_output = json.dumps(result, indent=2, ensure_ascii=False)
+        # Format output as JSON with sanitization for numpy types
+        from utils import sanitize_json_for_model_output
+        sanitized_result = sanitize_json_for_model_output(result)
+        json_output = json.dumps(sanitized_result, indent=2, ensure_ascii=False)
 
         # Save to file if output path specified
         if args.output:
@@ -118,6 +121,12 @@ def main():
         # Print the result
         print("\nVideo plan generated:")
         print(json_output)
+        
+        # Rule 5.1: Clean up mock files after successful execution
+        if config.AUTO_CLEANUP:
+            print("\nCleaning up temporary files...")
+            cleanup_mocks()
+        
         return 0
 
     except KeyboardInterrupt:
@@ -126,6 +135,13 @@ def main():
     except Exception as e:
         print(f"Error: {e}")
         return 1
+    finally:
+        # Rule 5.1: Always cleanup in development mode or if explicitly enabled
+        if config.DEBUG or config.AUTO_CLEANUP:
+            try:
+                cleanup_mocks()
+            except Exception as cleanup_error:
+                print(f"Warning: Cleanup failed: {cleanup_error}")
 
 
 if __name__ == "__main__":

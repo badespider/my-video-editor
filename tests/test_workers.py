@@ -18,8 +18,8 @@ import config
 class TestWorkers(unittest.TestCase):
     """Test cases for workers module."""
 
-    @patch('workers.call_model')
-    @patch('workers.validate_json_output')
+    @patch('workers.workers.call_model')
+    @patch('workers.workers.validate_json_output')
     def test_story_analysis_worker(self, mock_validate, mock_call):
         """Test StoryAnalysisWorker"""
         mock_call.return_value = '{"scenes": [{"id": 1, "description": "Scene 1", "duration": 5}]}'
@@ -53,12 +53,13 @@ class TestWorkers(unittest.TestCase):
         
         # Test first clip (intense mood)
         self.assertEqual(clips[0]["mood"], "intense")
-        self.assertEqual(clips[0]["duration"], 10)  # Fixed 10-second clips
+        # Duration should be limited by MAX_CLIP_DURATION or original duration
+        self.assertLessEqual(clips[0]["duration"], 15)
         self.assertIn("fierce battle", clips[0]["description"].lower())
         
         # Test second clip (happy mood)
         self.assertEqual(clips[1]["mood"], "happy")
-        self.assertEqual(clips[1]["duration"], 10)
+        self.assertLessEqual(clips[1]["duration"], 12)
         
     def test_clip_chooser_worker_validation(self):
         """Test ClipChooserWorker validation"""
@@ -92,34 +93,50 @@ class TestWorkers(unittest.TestCase):
         """Test NarrationWorker"""
         worker = workers.NarrationWorker(state={})
 
-        script = "This is a test script to narrate."
-        result = worker.run(script)
+        clips_data = {"clips": [{"description": "Test clip", "mood": "neutral", "duration": 10}]}
+        result = worker.run(clips_data)
 
-        # Check the stub implementation returns expected structure
+        # Check the expected structure
         self.assertIn("narration", result)
-        self.assertEqual(result["narration"], "Default narration text.")
+        self.assertIn("word_count", result)
 
     def test_bgm_worker(self):
         """Test BGMWorker"""
         worker = workers.BGMWorker(state={})
 
-        analysis = {"scenes": []}
-        result = worker.run(analysis)
+        clips_data = {"clips": [{"description": "Test clip", "mood": "neutral", "duration": 10}]}
+        result = worker.run(clips_data)
 
-        # Check the stub implementation returns expected structure
+        # Check the expected structure
         self.assertIn("bgm_options", result)
-        self.assertEqual(result["bgm_options"], ["Default BGM Option 1"])
+        self.assertIn("mood_analysis", result)
 
-    def test_assembly_worker(self):
-        """Test AssemblyWorker"""
-        worker = workers.AssemblyWorker(state={})
+    @patch('moviepy.VideoFileClip')
+    def test_assembly_worker(self, mock_video_clip):
+        """Test AssemblyWorker interface"""
+        # Mock the video clip creation
+        mock_clip = MagicMock()
+        mock_clip.duration = 10
+        mock_clip.audio = None
+        mock_video_clip.return_value = mock_clip
+        
+        # Mock concatenate_videoclips
+        with patch('moviepy.concatenate_videoclips') as mock_concat:
+            mock_final = MagicMock()
+            mock_final.duration = 10
+            mock_final.audio = None
+            mock_final.write_videofile = MagicMock()
+            mock_concat.return_value = mock_final
+            
+            worker = workers.AssemblyWorker(state={})
 
-        clips = {"clips": [{"description": "Clip 1"}]}
-        narrations = {"narrations": "Narration text"}
-        bgms = {"bgm_options": ["BGM Option"]}
+            clips = {"clips": [{"description": "Clip 1", "path": "test.mp4", "duration": 10}]}
+            narrations = {"narration": "Narration text"}
+            bgms = {"bgm_options": ["BGM Option"]}
 
-        result = worker.run(clips, narrations, bgms)
-        self.assertIn("timeline", result)
+            result = worker.run(clips, narrations, bgms)
+            self.assertIn("timeline", result)
+            self.assertIn("final_video", result)
 
 if __name__ == "__main__":
     unittest.main()

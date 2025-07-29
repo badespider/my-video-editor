@@ -18,12 +18,14 @@ import config
 class TestUtils(unittest.TestCase):
     """Test cases for utils module."""
 
+    @patch('utils.utils.HAS_OPENAI', False)
     def test_call_model_default(self):
         """Test call_model with default configuration."""
         result = utils.call_model("Test prompt")
         self.assertIn("Mock response", result)
         self.assertIn(config.MODEL, result)
 
+    @patch('utils.utils.HAS_OPENAI', False)
     def test_call_model_override(self):
         """Test call_model with model override."""
         result = utils.call_model("Test prompt", model="openai")
@@ -132,14 +134,14 @@ class TestUtils(unittest.TestCase):
         result = utils.truncate_input(text)  # No max_words specified
         self.assertEqual(len(result.split()), config.MAX_SCRIPT_WORDS)
 
-    @patch("utils.config")
+    @patch("utils.utils.config")
     def test_create_structured_prompt_family_friendly(self, mock_config):
         """Test structured prompt with family-friendly mode enabled."""
         mock_config.FAMILY_FRIENDLY = True
         prompt = utils.create_structured_prompt("task", "context", "format")
         self.assertIn("Keep content family-friendly", prompt)
 
-    @patch("utils.GameSDK")
+    @patch("utils.utils.GameSDK")
     def test_call_model_with_game_sdk(self, mock_game_sdk_class):
         """Test call_model when GAME SDK is available."""
         # Mock the GameSDK instance and its llm.call method
@@ -147,18 +149,11 @@ class TestUtils(unittest.TestCase):
         mock_sdk_instance.llm.call.return_value = "SDK response"
         mock_game_sdk_class.return_value = mock_sdk_instance
         
-        # Temporarily set GameSDK to not None
-        original_game_sdk = utils.GameSDK
-        utils.GameSDK = mock_game_sdk_class
-        
-        try:
-            result = utils.call_model("Test prompt")
-            self.assertEqual(result, "SDK response")
-            mock_sdk_instance.llm.call.assert_called_once()
-        finally:
-            utils.GameSDK = original_game_sdk
+        result = utils.call_model("Test prompt")
+        self.assertEqual(result, "SDK response")
+        mock_sdk_instance.llm.call.assert_called_once()
 
-    @patch("utils.GameSDK")
+    @patch("utils.utils.GameSDK")
     def test_call_model_with_game_sdk_exception(self, mock_game_sdk_class):
         """Test call_model exception handling with GAME SDK."""
         # Mock SDK to raise exception
@@ -166,18 +161,11 @@ class TestUtils(unittest.TestCase):
         mock_sdk_instance.llm.call.side_effect = Exception("SDK Error")
         mock_game_sdk_class.return_value = mock_sdk_instance
         
-        # Temporarily set GameSDK to not None
-        original_game_sdk = utils.GameSDK
-        utils.GameSDK = mock_game_sdk_class
-        
-        try:
-            with self.assertRaises(Exception):
-                utils.call_model("Test prompt")
-        finally:
-            utils.GameSDK = original_game_sdk
+        with self.assertRaises(Exception):
+            utils.call_model("Test prompt")
 
-    @patch("utils.GameSDK")
-    @patch("utils.config")
+    @patch("utils.utils.GameSDK")
+    @patch("utils.utils.config")
     def test_call_model_with_backup_model(self, mock_config, mock_game_sdk_class):
         """Test call_model fallback to backup model."""
         # Configure mock config
@@ -190,19 +178,12 @@ class TestUtils(unittest.TestCase):
         mock_sdk_instance.llm.call.side_effect = [Exception("Primary failed"), "Backup response"]
         mock_game_sdk_class.return_value = mock_sdk_instance
         
-        # Temporarily set GameSDK to not None
-        original_game_sdk = utils.GameSDK
-        utils.GameSDK = mock_game_sdk_class
-        
-        try:
-            result = utils.call_model("Test prompt")
-            self.assertEqual(result, "Backup response")
-            self.assertEqual(mock_sdk_instance.llm.call.call_count, 2)
-        finally:
-            utils.GameSDK = original_game_sdk
+        result = utils.call_model("Test prompt")
+        self.assertEqual(result, "Backup response")
+        self.assertEqual(mock_sdk_instance.llm.call.call_count, 2)
 
-    @patch("utils.GameSDK")
-    @patch("utils.config")
+    @patch("utils.utils.GameSDK")
+    @patch("utils.utils.config")
     def test_call_model_both_models_fail(self, mock_config, mock_game_sdk_class):
         """Test call_model when both primary and backup models fail."""
         # Configure mock config
@@ -214,16 +195,9 @@ class TestUtils(unittest.TestCase):
         mock_sdk_instance.llm.call.side_effect = [Exception("Primary failed"), Exception("Backup failed")]
         mock_game_sdk_class.return_value = mock_sdk_instance
         
-        # Temporarily set GameSDK to not None
-        original_game_sdk = utils.GameSDK
-        utils.GameSDK = mock_game_sdk_class
-        
-        try:
-            with self.assertRaises(Exception) as context:
-                utils.call_model("Test prompt")
-            self.assertIn("Both primary", str(context.exception))
-        finally:
-            utils.GameSDK = original_game_sdk
+        with self.assertRaises(Exception) as context:
+            utils.call_model("Test prompt")
+        self.assertIn("All models in cascade failed", str(context.exception))
 
     @patch("utils.config")
     def test_call_model_no_backup_model(self, mock_config):

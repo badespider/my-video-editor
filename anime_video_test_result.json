@@ -1,0 +1,525 @@
+{
+  "final_video": "thefinal_with_audio.mp4",
+  "plan": {
+    "type": "assembly",
+    "description": "Assembled with narration and BGM",
+    "clips": {
+      "clips": [
+        {
+          "id": 1,
+          "description": "Setting establishment",
+          "path": "C:\\Users\\dimit\\Videos\\anime\\clip_0.mp4",
+          "duration": 120,
+          "mood": "neutral",
+          "score": 0.7344076633453369,
+          "start_time": 366.44,
+          "end_time": 486.44
+        },
+        {
+          "id": 2,
+          "description": "Rising action",
+          "path": "C:\\Users\\dimit\\Videos\\anime\\clip_1.mp4",
+          "duration": 120,
+          "mood": "neutral",
+          "score": 0.804501473903656,
+          "start_time": 549.66,
+          "end_time": 669.66
+        },
+        {
+          "id": 3,
+          "description": "Climactic moment",
+          "path": "C:\\Users\\dimit\\Videos\\anime\\clip_2.mp4",
+          "duration": 120,
+          "mood": "neutral",
+          "score": 0.557873010635376,
+          "start_time": 1099.32,
+          "end_time": 1219.32
+        },
+        {
+          "id": 4,
+          "description": "Resolution begins",
+          "path": "C:\\Users\\dimit\\Videos\\anime\\clip_3.mp4",
+          "duration": 120,
+          "mood": "neutral",
+          "score": 0.5653257966041565,
+          "start_time": 1282.54,
+          "end_time": 1402.54
+        },
+        {
+          "id": 5,
+          "description": "Conclusion",
+          "path": "C:\\Users\\dimit\\Videos\\anime\\clip_4.mp4",
+          "duration": 120,
+          "mood": "neutral",
+          "score": 0.6099169254302979,
+          "start_time": 1648.98,
+          "end_time": 1768.98
+        },
+        {
+          "id": 6,
+          "description": "Epilogue",
+          "path": "C:\\Users\\dimit\\Videos\\anime\\clip_5.mp4",
+          "duration": 120,
+          "mood": "neutral",
+          "score": 0.6824345588684082,
+          "start_time": 1832.2,
+          "end_time": 1952.2
+        },
+        {
+          "id": 7,
+          "description": "Character introduction",
+          "path": "C:\\Users\\dimit\\Videos\\anime\\clip_6.mp4",
+          "duration": 120,
+          "mood": "neutral",
+          "score": 0.53038090467453,
+          "start_time": 2381.86,
+          "end_time": 2501.86
+        },
+        {
+          "id": 8,
+          "description": "Setting establishment",
+          "path": "C:\\Users\\dimit\\Videos\\anime\\clip_7.mp4",
+          "duration": 120,
+          "mood": "neutral",
+          "score": 0.5325910449028015,
+          "start_time": 2565.08,
+          "end_time": 2685.08
+        },
+        {
+          "id": 9,
+          "description": "Conflict development",
+          "path": "C:\\Users\\dimit\\Videos\\anime\\clip_8.mp4",
+          "duration": 120,
+          "mood": "intense",
+          "score": 0.5893711295351473,
+          "start_time": 2931.52,
+          "end_time": 3051.52
+        },
+        {
+          "id": 10,
+          "description": "Resolution begins",
+          "path": "C:\\Users\\dimit\\Videos\\anime\\clip_9.mp4",
+          "duration": 120,
+          "mood": "neutral",
+          "score": 0.6458754882369614,
+          "start_time": 3481.18,
+          "end_time": 3601.18
+        }
+      ]
+    },
+    "narrations": {
+      "narration": "",
+      "word_count": 0,
+      "skipped": true
+    },
+    "bgms": {
+      "bgm_options": [],
+      "mood_analysis": {},
+      "skipped": true
+    },
+    "timeline": [
+      {
+        "time": 0.0,
+        "event": "clip_start",
+        "clip_id": 1,
+        "description": "Setting establishment",
+        "mood": "neutral",
+        "duration": 120
+      },
+      {
+        "time": 120.0,
+        "event": "clip_end",
+        "clip_id": 1
+      },
+      {
+        "time": 120.0,
+        "event": "clip_start",
+        "clip_id": 2,
+        "description": "Rising action",
+        "mood": "neutral",
+        "duration": 120
+      },
+      {
+        "time": 240.0,
+        "event": "clip_end",
+        "clip_id": 2
+      },
+      {
+        "time": 240.0,
+        "event": "clip_start",
+        "clip_id": 3,
+        "description": "Climactic moment",
+        "mood": "neutral",
+        "duration": 120
+      },
+      {
+        "time": 360.0,
+        "event": "clip_end",
+        "clip_id": 3
+      },
+      {
+        "time": 360.0,
+        "event": "clip_start",
+        "clip_id": 4,
+        "description": "Resolution begins",
+        "mood": "neutral",
+        "duration": 120
+      },
+      {
+        "time": 480.0,
+        "event": "clip_end",
+        "clip_id": 4
+      },
+      {
+        "time": 480.0,
+        "event": "clip_start",
+        "clip_id": 5,
+        "description": "Conclusion",
+        "mood": "neutral",
+        "duration": 120
+      },
+      {
+        "time": 600.0,
+        "event": "clip_end",
+        "clip_id": 5
+      },
+      {
+        "time": 600.0,
+        "event": "clip_start",
+        "clip_id": 6,
+        "description": "Epilogue",
+        "mood": "neutral",
+        "duration": 120
+      },
+      {
+        "time": 720.0,
+        "event": "clip_end",
+        "clip_id": 6
+      },
+      {
+        "time": 720.0,
+        "event": "clip_start",
+        "clip_id": 7,
+        "description": "Character introduction",
+        "mood": "neutral",
+        "duration": 120
+      },
+      {
+        "time": 840.0,
+        "event": "clip_end",
+        "clip_id": 7
+      },
+      {
+        "time": 840.0,
+        "event": "clip_start",
+        "clip_id": 8,
+        "description": "Setting establishment",
+        "mood": "neutral",
+        "duration": 120
+      },
+      {
+        "time": 960.0,
+        "event": "clip_end",
+        "clip_id": 8
+      },
+      {
+        "time": 960.0,
+        "event": "clip_start",
+        "clip_id": 9,
+        "description": "Conflict development",
+        "mood": "intense",
+        "duration": 120
+      },
+      {
+        "time": 1080.0,
+        "event": "clip_end",
+        "clip_id": 9
+      },
+      {
+        "time": 1080.0,
+        "event": "clip_start",
+        "clip_id": 10,
+        "description": "Resolution begins",
+        "mood": "neutral",
+        "duration": 120
+      },
+      {
+        "time": 1200.0,
+        "event": "clip_end",
+        "clip_id": 10
+      },
+      {
+        "time": 1200.0,
+        "event": "narration_end",
+        "description": "End narration"
+      },
+      {
+        "time": 1200.0,
+        "event": "bgm_end",
+        "description": "Fade out background music"
+      }
+    ],
+    "total_duration": 1200.0
+  },
+  "clips": {
+    "clips": [
+      {
+        "id": 1,
+        "description": "Setting establishment",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_0.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.7344076633453369,
+        "start_time": 366.44,
+        "end_time": 486.44
+      },
+      {
+        "id": 2,
+        "description": "Rising action",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_1.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.804501473903656,
+        "start_time": 549.66,
+        "end_time": 669.66
+      },
+      {
+        "id": 3,
+        "description": "Climactic moment",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_2.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.557873010635376,
+        "start_time": 1099.32,
+        "end_time": 1219.32
+      },
+      {
+        "id": 4,
+        "description": "Resolution begins",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_3.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.5653257966041565,
+        "start_time": 1282.54,
+        "end_time": 1402.54
+      },
+      {
+        "id": 5,
+        "description": "Conclusion",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_4.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.6099169254302979,
+        "start_time": 1648.98,
+        "end_time": 1768.98
+      },
+      {
+        "id": 6,
+        "description": "Epilogue",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_5.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.6824345588684082,
+        "start_time": 1832.2,
+        "end_time": 1952.2
+      },
+      {
+        "id": 7,
+        "description": "Character introduction",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_6.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.53038090467453,
+        "start_time": 2381.86,
+        "end_time": 2501.86
+      },
+      {
+        "id": 8,
+        "description": "Setting establishment",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_7.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.5325910449028015,
+        "start_time": 2565.08,
+        "end_time": 2685.08
+      },
+      {
+        "id": 9,
+        "description": "Conflict development",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_8.mp4",
+        "duration": 120,
+        "mood": "intense",
+        "score": 0.5893711295351473,
+        "start_time": 2931.52,
+        "end_time": 3051.52
+      },
+      {
+        "id": 10,
+        "description": "Resolution begins",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_9.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.6458754882369614,
+        "start_time": 3481.18,
+        "end_time": 3601.18
+      }
+    ]
+  },
+  "narrations": {
+    "narration": "",
+    "word_count": 0,
+    "skipped": true
+  },
+  "bgms": {
+    "bgm_options": [],
+    "mood_analysis": {},
+    "skipped": true
+  },
+  "timeline": [
+    {
+      "time": 0.0,
+      "event": "clip_start",
+      "clip_id": 1,
+      "description": "Setting establishment",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 120.0,
+      "event": "clip_end",
+      "clip_id": 1
+    },
+    {
+      "time": 120.0,
+      "event": "clip_start",
+      "clip_id": 2,
+      "description": "Rising action",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 240.0,
+      "event": "clip_end",
+      "clip_id": 2
+    },
+    {
+      "time": 240.0,
+      "event": "clip_start",
+      "clip_id": 3,
+      "description": "Climactic moment",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 360.0,
+      "event": "clip_end",
+      "clip_id": 3
+    },
+    {
+      "time": 360.0,
+      "event": "clip_start",
+      "clip_id": 4,
+      "description": "Resolution begins",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 480.0,
+      "event": "clip_end",
+      "clip_id": 4
+    },
+    {
+      "time": 480.0,
+      "event": "clip_start",
+      "clip_id": 5,
+      "description": "Conclusion",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 600.0,
+      "event": "clip_end",
+      "clip_id": 5
+    },
+    {
+      "time": 600.0,
+      "event": "clip_start",
+      "clip_id": 6,
+      "description": "Epilogue",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 720.0,
+      "event": "clip_end",
+      "clip_id": 6
+    },
+    {
+      "time": 720.0,
+      "event": "clip_start",
+      "clip_id": 7,
+      "description": "Character introduction",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 840.0,
+      "event": "clip_end",
+      "clip_id": 7
+    },
+    {
+      "time": 840.0,
+      "event": "clip_start",
+      "clip_id": 8,
+      "description": "Setting establishment",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 960.0,
+      "event": "clip_end",
+      "clip_id": 8
+    },
+    {
+      "time": 960.0,
+      "event": "clip_start",
+      "clip_id": 9,
+      "description": "Conflict development",
+      "mood": "intense",
+      "duration": 120
+    },
+    {
+      "time": 1080.0,
+      "event": "clip_end",
+      "clip_id": 9
+    },
+    {
+      "time": 1080.0,
+      "event": "clip_start",
+      "clip_id": 10,
+      "description": "Resolution begins",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 1200.0,
+      "event": "clip_end",
+      "clip_id": 10
+    },
+    {
+      "time": 1200.0,
+      "event": "narration_end",
+      "description": "End narration"
+    },
+    {
+      "time": 1200.0,
+      "event": "bgm_end",
+      "description": "Fade out background music"
+    }
+  ],
+  "total_duration": 1200.0,
+  "source_video": "C:\\Users\\dimit\\Videos\\anime\\1mp4.mp4",
+  "processing_type": "video_analysis",
+  "coverage_percentage": 0.9762215676585707,
+  "scene_count": 20
+}

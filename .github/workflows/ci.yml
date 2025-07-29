@@ -9,6 +9,17 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-env:
+          - name: "Mock FFmpeg (No Dependencies)"
+            mock_ffmpeg: "1"
+            install_ffmpeg: false
+          - name: "Full Environment (With FFmpeg)"
+            mock_ffmpeg: "0"
+            install_ffmpeg: true
+    
+    name: Test - ${{ matrix.test-env.name }}
     
     steps:
     - uses: actions/checkout@v4
@@ -18,18 +29,41 @@ jobs:
       with:
         python-version: '3.12'
     
-    - name: Install dependencies
+    - name: Install FFmpeg (Full Environment Only)
+      if: matrix.test-env.install_ffmpeg
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+        ffmpeg -version
+    
+    - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest-cov
     
-    - name: Run tests with coverage
+    - name: Install MoviePy (Full Environment Only)
+      if: matrix.test-env.install_ffmpeg
       run: |
-        python -m pytest --cov=. --cov-report=term-missing --cov-fail-under=100
+        pip install moviepy
+    
+    - name: Run tests with coverage (Mock Environment)
+      if: matrix.test-env.mock_ffmpeg == '1'
+      env:
+        MOCK_FFMPEG: "1"
+      run: |
+        python -m pytest --cov=. --cov-report=term-missing --cov-fail-under=100 -v
+    
+    - name: Run tests with coverage (Full Environment)
+      if: matrix.test-env.mock_ffmpeg == '0'
+      env:
+        MOCK_FFMPEG: "0"
+      run: |
+        python -m pytest --cov=. --cov-report=term-missing --cov-fail-under=100 -v
       
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
       if: success()
       with:
         fail_ci_if_error: true
+        flags: ${{ matrix.test-env.mock_ffmpeg == '1' && 'mock-ffmpeg' || 'full-env' }}

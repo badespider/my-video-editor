@@ -1,0 +1,282 @@
+{
+  "final_video": "C:\\Users\\dimit\\Videos\\anime\\thefinal.mp4",
+  "plan": "Assembled with narration and BGM",
+  "clips": {
+    "clips": [
+      {
+        "id": 1,
+        "description": "Character introduction",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_0.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.9325,
+        "start_time": 183.22,
+        "end_time": 303.22
+      },
+      {
+        "id": 2,
+        "description": "Conflict development",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_1.mp4",
+        "duration": 120,
+        "mood": "intense",
+        "score": 0.955,
+        "start_time": 732.88,
+        "end_time": 852.88
+      },
+      {
+        "id": 3,
+        "description": "Tension building",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_2.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.9225000000000001,
+        "start_time": 916.1,
+        "end_time": 1036.1
+      },
+      {
+        "id": 4,
+        "description": "Climactic moment",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_3.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.9700000000000001,
+        "start_time": 1099.32,
+        "end_time": 1219.32
+      },
+      {
+        "id": 5,
+        "description": "Conclusion",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_4.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.7925,
+        "start_time": 1648.98,
+        "end_time": 1768.98
+      },
+      {
+        "id": 6,
+        "description": "Epilogue",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_5.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.96,
+        "start_time": 1832.2,
+        "end_time": 1952.2
+      },
+      {
+        "id": 7,
+        "description": "Transition scene",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_6.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.9925,
+        "start_time": 2015.42,
+        "end_time": 2135.42
+      },
+      {
+        "id": 8,
+        "description": "Rising action",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_7.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.9225000000000001,
+        "start_time": 2748.3,
+        "end_time": 2868.3
+      },
+      {
+        "id": 9,
+        "description": "Conflict development",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_8.mp4",
+        "duration": 120,
+        "mood": "intense",
+        "score": 0.835,
+        "start_time": 2931.52,
+        "end_time": 3051.52
+      },
+      {
+        "id": 10,
+        "description": "Tension building",
+        "path": "C:\\Users\\dimit\\Videos\\anime\\clip_9.mp4",
+        "duration": 120,
+        "mood": "neutral",
+        "score": 0.8675,
+        "start_time": 3114.74,
+        "end_time": 3234.74
+      }
+    ]
+  },
+  "narrations": {
+    "narration": "As the story unfolds, Character introduction. In a dramatic turn of events, Conflict development. As the story unfolds, Tension building. As the story unfolds, Climactic moment. As the story unfolds, Conclusion. As the story unfolds, Epilogue. As the story unfolds, Transition scene. As the story unfolds, Rising action. In a dramatic turn of events, Conflict development. As the story unfolds, Tension building.",
+    "word_count": 62
+  },
+  "bgms": {
+    "bgm_options": [
+      "Gentle instrumental background music",
+      "Soft ambient atmospheric sounds",
+      "Light classical with moderate tempo"
+    ],
+    "mood_analysis": {
+      "neutral": 8,
+      "intense": 2
+    }
+  },
+  "timeline": [
+    {
+      "time": 0.0,
+      "event": "bgm_start",
+      "description": "Start background music: Gentle instrumental background music",
+      "duration": 1200
+    },
+    {
+      "time": 0.0,
+      "event": "narration_start",
+      "description": "Begin narration: As the story unfolds, Character introduction. In a dramatic turn of events, Conflict development. As...",
+      "duration": 1200
+    },
+    {
+      "time": 0.0,
+      "event": "clip_start",
+      "clip_id": 1,
+      "description": "Character introduction",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 120.0,
+      "event": "clip_end",
+      "clip_id": 1
+    },
+    {
+      "time": 120.0,
+      "event": "clip_start",
+      "clip_id": 2,
+      "description": "Conflict development",
+      "mood": "intense",
+      "duration": 120
+    },
+    {
+      "time": 240.0,
+      "event": "clip_end",
+      "clip_id": 2
+    },
+    {
+      "time": 240.0,
+      "event": "clip_start",
+      "clip_id": 3,
+      "description": "Tension building",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 360.0,
+      "event": "clip_end",
+      "clip_id": 3
+    },
+    {
+      "time": 360.0,
+      "event": "clip_start",
+      "clip_id": 4,
+      "description": "Climactic moment",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 480.0,
+      "event": "clip_end",
+      "clip_id": 4
+    },
+    {
+      "time": 480.0,
+      "event": "clip_start",
+      "clip_id": 5,
+      "description": "Conclusion",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 600.0,
+      "event": "clip_end",
+      "clip_id": 5
+    },
+    {
+      "time": 600.0,
+      "event": "clip_start",
+      "clip_id": 6,
+      "description": "Epilogue",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 720.0,
+      "event": "clip_end",
+      "clip_id": 6
+    },
+    {
+      "time": 720.0,
+      "event": "clip_start",
+      "clip_id": 7,
+      "description": "Transition scene",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 840.0,
+      "event": "clip_end",
+      "clip_id": 7
+    },
+    {
+      "time": 840.0,
+      "event": "clip_start",
+      "clip_id": 8,
+      "description": "Rising action",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 960.0,
+      "event": "clip_end",
+      "clip_id": 8
+    },
+    {
+      "time": 960.0,
+      "event": "clip_start",
+      "clip_id": 9,
+      "description": "Conflict development",
+      "mood": "intense",
+      "duration": 120
+    },
+    {
+      "time": 1080.0,
+      "event": "clip_end",
+      "clip_id": 9
+    },
+    {
+      "time": 1080.0,
+      "event": "clip_start",
+      "clip_id": 10,
+      "description": "Tension building",
+      "mood": "neutral",
+      "duration": 120
+    },
+    {
+      "time": 1200.0,
+      "event": "clip_end",
+      "clip_id": 10
+    },
+    {
+      "time": 1200.0,
+      "event": "narration_end",
+      "description": "End narration"
+    },
+    {
+      "time": 1200.0,
+      "event": "bgm_end",
+      "description": "Fade out background music"
+    }
+  ],
+  "total_duration": 1200.0,
+  "source_video": "C:\\Users\\dimit\\Videos\\anime\\1mp4.mp4",
+  "processing_type": "video_analysis",
+  "coverage_percentage": 0.9854736943066691,
+  "scene_count": 20
+}

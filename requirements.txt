@@ -1,5 +1,8 @@
 game-by-virtuals
 fastapi
 uvicorn[standard]
+websockets
+python-multipart
 pytest
 pytest-cov
+websocket-client

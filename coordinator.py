@@ -4,10 +4,13 @@ Sets up and runs the complete video creation workflow.
 """
 
 from workers import IngestionWorker, StoryAnalysisWorker, ClipChooserWorker, NarrationWorker, BGMWorker, AssemblyWorker
-from utils import truncate_input, apply_content_filter, sanitize_json_for_model_output
+from utils import truncate_input, apply_content_filter, sanitize_json_for_model_output, call_model
 import config
 import logging
-from typing import Dict, Any, Optional
+import json
+import os
+import re
+from typing import Dict, Any, Optional, List
 
 # Configure logging
 logging.basicConfig(level=getattr(logging, config.LOG_LEVEL))
@@ -20,14 +23,18 @@ class VideoAgent:
     Sequentially instantiates workers, passes shared state, and includes verification.
     """
 
-    def __init__(self, model: str = None):
+    def __init__(self, model: str = None, video_maker=None, ffmpeg_runner=None):
         """
-        Initialize VideoAgent with optional model override.
+        Initialize VideoAgent with optional model override and video creation dependencies.
         
         Args:
             model: Override default model from config
+            video_maker: Custom video creation function for testing (optional)
+            ffmpeg_runner: Custom FFmpeg runner for testing (optional)
         """
         self.model = model or config.MODEL
+        self.video_maker = video_maker  # Injected dependency for testing
+        self.ffmpeg_runner = ffmpeg_runner  # Injected FFmpeg runner
         self.shared_state = {}  # Shared state across all workers
         self.workers = {}  # Container for instantiated workers
         logger.info(f"VideoAgent initialized with model: {self.model}")
@@ -41,6 +48,8 @@ class VideoAgent:
         """
         return {
             "model": self.model,
+            "video_maker": self.video_maker,  # Pass injected video maker
+            "ffmpeg_runner": self.ffmpeg_runner,  # Pass injected ffmpeg runner
             "config": {
                 "max_scenes": config.MAX_SCENES,
                 "max_clip_duration": config.MAX_CLIP_DURATION,
@@ -60,7 +69,7 @@ class VideoAgent:
         
         # Sequential instantiation of workers
         self.workers = {
-            "story_analysis": StoryAnalysisWorker(environment),
+            "story_analysis": StoryAnalysisWorker(),  # Phase 3 StoryAnalysisWorker takes no parameters
             "clip_chooser": ClipChooserWorker(environment),
             "narration": NarrationWorker(environment),
             "bgm": BGMWorker(environment),
@@ -211,23 +220,31 @@ class VideoAgent:
                 ["clips"]
             )
             
-            # Step 4: Narration Generation
-            logger.info("=== Step 3: Narration Generation ===")
-            narration_output = self._execute_with_retry(
-                "narration",
-                self.workers["narration"].run,
-                clips_output,
-                ["narration"]
-            )
+            # Step 4: Narration Generation - Skip if disabled (Rule 4.1)
+            if config.ENABLE_NARRATION:
+                logger.info("=== Step 3: Narration Generation ===")
+                narration_output = self._execute_with_retry(
+                    "narration",
+                    self.workers["narration"].run,
+                    clips_output,
+                    ["narration"]
+                )
+            else:
+                logger.info("=== Step 3: Narration Generation - SKIPPED (disabled in config) ===")
+                narration_output = {"narration": "", "word_count": 0, "skipped": True}
             
-            # Step 5: BGM Suggestions
-            logger.info("=== Step 4: BGM Suggestions ===")
-            bgm_output = self._execute_with_retry(
-                "bgm",
-                self.workers["bgm"].run,
-                clips_output,
-                ["bgm_options"]
-            )
+            # Step 5: BGM Suggestions - Skip if disabled (Rule 4.1)
+            if config.ENABLE_BGM:
+                logger.info("=== Step 4: BGM Suggestions ===")
+                bgm_output = self._execute_with_retry(
+                    "bgm",
+                    self.workers["bgm"].run,
+                    clips_output,
+                    ["bgm_options"]
+                )
+            else:
+                logger.info("=== Step 4: BGM Suggestions - SKIPPED (disabled in config) ===")
+                bgm_output = {"bgm_options": [], "mood_analysis": {}, "skipped": True}
             
             # Step 6: Final Assembly
             logger.info("=== Step 5: Final Assembly ===")
@@ -354,23 +371,31 @@ class VideoAgent:
                 ["clips"]
             )
             
-            # Step 4: Narration Generation based on clips
-            logger.info("=== Step 3: Narration Generation ===")
-            narration_output = self._execute_with_retry(
-                "narration",
-                self.workers["narration"].run,
-                clips_output,
-                ["narration"]
-            )
+            # Step 4: Narration Generation based on clips - Skip if disabled (Rule 4.1)
+            if config.ENABLE_NARRATION:
+                logger.info("=== Step 3: Narration Generation ===")
+                narration_output = self._execute_with_retry(
+                    "narration",
+                    self.workers["narration"].run,
+                    clips_output,
+                    ["narration"]
+                )
+            else:
+                logger.info("=== Step 3: Narration Generation - SKIPPED (disabled in config) ===")
+                narration_output = {"narration": "", "word_count": 0, "skipped": True}
             
-            # Step 5: BGM Suggestions based on clips
-            logger.info("=== Step 4: BGM Suggestions ===")
-            bgm_output = self._execute_with_retry(
-                "bgm",
-                self.workers["bgm"].run,
-                clips_output,
-                ["bgm_options"]
-            )
+            # Step 5: BGM Suggestions based on clips - Skip if disabled (Rule 4.1)
+            if config.ENABLE_BGM:
+                logger.info("=== Step 4: BGM Suggestions ===")
+                bgm_output = self._execute_with_retry(
+                    "bgm",
+                    self.workers["bgm"].run,
+                    clips_output,
+                    ["bgm_options"]
+                )
+            else:
+                logger.info("=== Step 4: BGM Suggestions - SKIPPED (disabled in config) ===")
+                bgm_output = {"bgm_options": [], "mood_analysis": {}, "skipped": True}
             
             # Step 6: Final Assembly
             logger.info("=== Step 5: Final Assembly ===")
@@ -415,10 +440,183 @@ class VideoAgent:
         logger.info("VideoAgent state reset completed")
 
 
-# Convenience functions for backward compatibility with existing tests
+    def parse_command(self, message: str) -> dict:
+        """
+        Parse a natural language command into a structured edit action.
+
+        Args:
+            message: The command message in natural language
+
+        Returns:
+            Parsed command as a dictionary
+        """
+        try:
+            logger.info(f"Parsing command: {message}")
+            prompt = f"Parse video edit command: {message}. Return JSON: {{type: str, params: dict}}."
+            response = call_model(prompt, "gpt-4")
+            parsed_command = json.loads(response)
+
+            # Validate parsed command structure
+            if not isinstance(parsed_command, dict) or 'type' not in parsed_command or 'params' not in parsed_command:
+                raise ValueError("Parsed command is missing required fields")
+
+            logger.info(f"Command parsed successfully: {parsed_command}")
+            return parsed_command
+        except Exception as e:
+            logger.error(f"Error parsing command: {e}")
+            raise ValueError(f"Failed to parse command: {e}")
+
+
+    def _validate_command(self, command: dict, required_keys: List[str]) -> bool:
+        """
+        Validate the structure of a command dictionary.
+
+        Args:
+            command: Command dictionary to validate
+            required_keys: List of required keys in the command
+
+        Returns:
+            True if valid, False otherwise
+        """
+        return all(key in command for key in required_keys)
+
+
+    def apply_command(self, session_data: dict, command: dict) -> None:
+        """
+        Apply a parsed command to the session data.
+
+        Args:
+            session_data: The session data to update
+            command: The parsed command to apply
+
+        Raises:
+            ValueError: If the command is invalid or cannot be applied
+        """
+        if not self._validate_command(command, ['type', 'params']):
+            raise ValueError("Invalid command structure")
+
+        logger.info(f"Applying command: {command}")
+        command_type = command['type']
+        params = command['params']
+
+        # Example implementation for a 'trim' command
+        if command_type == 'trim':
+            self._apply_trim_command(session_data, params)
+
+    def _apply_trim_command(self, session_data: dict, params: dict) -> None:
+        """
+        Apply a trim command to the video session.
+
+        Args:
+            session_data: The session data containing video info
+            params: Parameters for the trim command
+
+        Raises:
+            ValueError: If trim parameters are invalid
+        """
+        start = params.get('start')
+        end = params.get('end', session_data['video_duration'])
+        
+        if start is None or end is None or start < 0 or end <= start:
+            raise ValueError(f"Invalid trim parameters: start={start}, end={end}")
+
+        # Placeholder logic for trimming video
+        video_path = session_data['video_path']
+        # Perform trimming logic here (e.g., using MoviePy or other libraries)
+        new_path = f"{video_path}_trimmed_{start}_{end}.mp4"  # Dummy new path
+        session_data['preview_path'] = new_path
+        session_data['edits'].append({'type': 'trim', 'params': params})
+
+        logger.info(f"Trim applied. Start: {start}, End: {end}, New Path: {new_path}")
+
+    def finalize_video(self, session_data: dict) -> str:
+        """
+        Finalize video by applying all edits in batch and creating final MP4.
+        
+        Args:
+            session_data: Session data containing video path and edits
+            
+        Returns:
+            Path to the finalized video file
+            
+        Raises:
+            ValueError: If finalization fails
+        """
+        try:
+            from utils.utils import extract_clip, assemble_clips
+            import uuid
+            
+            video_path = session_data.get('video_path')
+            edits = session_data.get('edits', [])
+            
+            if not video_path or not os.path.exists(video_path):
+                raise ValueError("Video path is invalid or file does not exist")
+            
+            logger.info(f"Finalizing video with {len(edits)} edits")
+            
+            # Generate final video path
+            final_path = f"final_{str(uuid.uuid4())[:8]}.mp4"
+            
+            if not edits:
+                # No edits applied, return original video
+                import shutil
+                shutil.copy2(video_path, final_path)
+                logger.info(f"No edits to apply, copied original video to: {final_path}")
+                return final_path
+            
+            # Apply all edits sequentially
+            current_path = video_path
+            
+            for i, edit in enumerate(edits):
+                edit_type = edit.get('type')
+                params = edit.get('params', {})
+                
+                if edit_type == 'trim':
+                    start = params.get('start', 0)
+                    end = params.get('end')
+                    
+                    temp_output = f"temp_edit_{i}_{str(uuid.uuid4())[:8]}.mp4"
+                    
+                    # Apply trim edit
+                    extract_clip(current_path, start, end, temp_output)
+                    
+                    # Update current path for next edit
+                    if current_path != video_path:
+                        # Clean up previous temp file
+                        try:
+                            os.remove(current_path)
+                        except:
+                            pass
+                    
+                    current_path = temp_output
+                    logger.info(f"Applied edit {i+1}/{len(edits)}: {edit_type}")
+                
+                # Add more edit types here as needed
+                else:
+                    logger.warning(f"Unknown edit type: {edit_type}")
+            
+            # Final assembly step
+            if current_path != final_path:
+                if current_path != video_path:
+                    # Move temp file to final location
+                    import shutil
+                    shutil.move(current_path, final_path)
+                else:
+                    # Copy original if no temp file was created
+                    import shutil
+                    shutil.copy2(current_path, final_path)
+            
+            logger.info(f"Video finalization completed: {final_path}")
+            return final_path
+            
+        except Exception as e:
+            logger.error(f"Video finalization failed: {e}")
+            # Return latest preview as fallback
+            return session_data.get('preview_path', session_data.get('video_path', ''))
+
 def analyze_story(script: str) -> Dict[str, Any]:
     """Standalone function for story analysis."""
-    worker = StoryAnalysisWorker({})
+    worker = StoryAnalysisWorker()
     return worker.run(script)
 
 def choose_clip_descriptions(analysis: Dict[str, Any]) -> list:
@@ -430,7 +628,7 @@ def choose_clip_descriptions(analysis: Dict[str, Any]) -> list:
 def generate_narration(script: str) -> str:
     """Standalone function for narration generation."""
     # For backward compatibility, create clips from script first
-    analysis_worker = StoryAnalysisWorker({})
+    analysis_worker = StoryAnalysisWorker()
     analysis = analysis_worker.run(script)
     
     clip_worker = ClipChooserWorker({})

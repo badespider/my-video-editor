@@ -9,9 +9,12 @@ import sys
 import tempfile
 import shutil
 from unittest.mock import patch, MagicMock
+from pathlib import Path
 
 # Add parent directory to path to import modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from tests.utils.video_helper import make_dummy_video
 
 import config
 from coordinator import VideoAgent
@@ -32,8 +35,7 @@ class TestPhase4CoordinatorRules(unittest.TestCase):
         os.makedirs(self.temp_dir, exist_ok=True)
         
         # Create a mock video file
-        with open(self.test_video_path, 'w') as f:
-            f.write("mock video content")
+        make_dummy_video(Path(self.test_video_path))
         
         # Store original config values
         self.original_output_dir = config.VIDEO_OUTPUT_DIR

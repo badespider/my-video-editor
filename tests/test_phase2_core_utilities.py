@@ -8,9 +8,12 @@ import os
 import sys
 import json
 from unittest.mock import patch, MagicMock
+from pathlib import Path
 
 # Add parent directory to path to import modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from tests.utils.video_helper import make_dummy_video
 
 import config
 from utils import call_model, detect_scenes, extract_clip, get_video_info, validate_json_output
@@ -52,7 +55,7 @@ class TestPhase2ModelRouter(unittest.TestCase):
         # Should be a valid JSON mock response
         try:
             parsed = json.loads(response)
-            self.assertIn("mock_response", parsed)
+            self.assertIn("Mock response", parsed)
         except json.JSONDecodeError:
             self.fail("Mock response should be valid JSON")
     
@@ -97,8 +100,7 @@ class TestPhase2VideoHelpers(unittest.TestCase):
         mock_video_path = "test_video.mp4"
         
         # Create a temporary file to simulate video
-        with open(mock_video_path, 'w') as f:
-            f.write("mock video content")
+        make_dummy_video(Path(mock_video_path))
         
         try:
             scenes = detect_scenes(mock_video_path)
@@ -125,14 +127,14 @@ class TestPhase2VideoHelpers(unittest.TestCase):
             if os.path.exists(mock_video_path):
                 os.remove(mock_video_path)
     
+    
     def test_extract_clip_mock_implementation(self):
         """Test clip extraction with mock implementation"""
         video_path = "test_video.mp4"
         output_path = "test_clip.mp4"
         
         # Create mock source video
-        with open(video_path, 'w') as f:
-            f.write("mock video content")
+        make_dummy_video(Path(video_path))
         
         try:
             result_path = extract_clip(video_path, 0, 10, output_path)
@@ -149,13 +151,13 @@ class TestPhase2VideoHelpers(unittest.TestCase):
                 if os.path.exists(path):
                     os.remove(path)
     
+    
     def test_get_video_info_mock(self):
         """Test video info extraction with mock"""
         video_path = "test_video.mp4"
         
         # Create mock video file
-        with open(video_path, 'w') as f:
-            f.write("mock video content")
+        make_dummy_video(Path(video_path))
         
         try:
             info = get_video_info(video_path)

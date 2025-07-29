@@ -92,9 +92,37 @@ project/
 
 ### Installation
 
+#### Core Dependencies
+
 ```bash
 pip install game-by-virtuals fastapi uvicorn[standard]
 ```
+
+#### Optional Video Processing Dependencies
+
+For full video processing capabilities, install FFmpeg and MoviePy:
+
+**FFmpeg Installation:**
+- **Windows**: Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add to PATH
+- **macOS**: `brew install ffmpeg`
+- **Linux**: `sudo apt update && sudo apt install ffmpeg`
+
+**Python Video Libraries:**
+```bash
+# Essential video processing
+pip install moviepy
+
+# Advanced scene detection
+pip install scenedetect
+
+# Text-to-speech capabilities
+pip install gTTS
+
+# Complete video processing stack
+pip install moviepy scenedetect gTTS opencv-python
+```
+
+**Note**: The system works without these dependencies using fallback mechanisms (see Fallback Behavior section below).
 
 ### CLI Usage
 
@@ -185,6 +213,13 @@ Run all unit tests with pytest:
 python -m pytest tests/
 ```
 
+#### Fallback Behavior
+
+- If `MoviePy` or `FFmpeg` is not installed, tests that require video processing will be skipped gracefully with appropriate warnings.
+- Mock implementations will be used to simulate video processing tasks where possible.
+- Ensure environment variables `MOCK_FFMPEG` is set to `1` to activate full mocking.
+- Preserve test video outputs by setting `KEEP_TEST_VIDS` environment variable to any non-empty value.
+
 Run individual test modules:
 
 ```bash
@@ -261,6 +296,39 @@ Key configuration options in `config.py`:
 - `MAX_CLIP_DURATION`: Max clip length (default: 30s)
 - `MAX_NARRATION_WORDS`: Narration limit (default: 200)
 - `FAMILY_FRIENDLY`: Content filtering (default: True)
+
+### Environment Variables
+
+The system recognizes several environment variables for customizing behavior:
+
+#### Testing and Development
+- `MOCK_FFMPEG=1`: Enable mock video processing for testing environments where FFmpeg/MoviePy are unavailable
+- `KEEP_TEST_VIDS=1`: Preserve generated test video files instead of cleaning them up automatically
+- `LOG_LEVEL=DEBUG`: Set logging verbosity (DEBUG, INFO, WARNING, ERROR)
+
+#### Video Processing Fallbacks
+- `ENABLE_FFMPEG=1`: Enable FFmpeg-based video processing (requires FFmpeg binary in PATH)
+- `ENABLE_MEMORIES_AI=1`: Enable Memories.ai integration (when API key is available)
+- `VIDEO_OUTPUT_DIR=./output`: Override default video output directory
+- `UPLOAD_DIR=./uploads`: Override default upload directory
+
+#### Model Configuration
+- `MODEL=grok-4`: Override model selection from config.py
+- `GROK_API_KEY=your_key`: API key for Grok model access
+- `OPENAI_API_KEY=your_key`: API key for OpenAI model access
+- `ANTHROPIC_API_KEY=your_key`: API key for Anthropic model access
+
+#### Example Usage
+```bash
+# Run tests with full mocking enabled
+MOCK_FFMPEG=1 KEEP_TEST_VIDS=1 python -m pytest tests/
+
+# Run with specific model and debug logging
+MODEL=grok-4 LOG_LEVEL=DEBUG python main.py --demo
+
+# Production setup with real video processing
+ENABLE_FFMPEG=1 VIDEO_OUTPUT_DIR=/var/videos python backend/api.py
+```
 
 ## Development
 

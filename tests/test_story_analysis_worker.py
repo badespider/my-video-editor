@@ -23,8 +23,8 @@ class TestStoryAnalysisWorker(unittest.TestCase):
         """Set up test fixtures."""
         self.worker = workers.StoryAnalysisWorker(state={})
 
-    @patch('workers.call_model')
-    @patch('workers.validate_json_output')
+    @patch('workers.workers.call_model')
+    @patch('workers.workers.validate_json_output')
     def test_story_analysis_basic_functionality(self, mock_validate, mock_call):
         """Test basic story analysis functionality."""
         mock_call.return_value = '{"scenes": [{"id": 1, "description": "Scene 1", "duration": 5}]}'
@@ -38,8 +38,8 @@ class TestStoryAnalysisWorker(unittest.TestCase):
         self.assertIn("scenes", result)
         self.assertEqual(len(result["scenes"]), 1)
 
-    @patch('workers.call_model')
-    @patch('workers.validate_json_output')
+    @patch('workers.workers.call_model')
+    @patch('workers.workers.validate_json_output')
     def test_script_over_max_scenes_trimmed(self, mock_validate, mock_call):
         """Test that scripts with >20 scenes are trimmed to 20."""
         # Create 25 scenes (more than MAX_SCENES = 20)
@@ -55,8 +55,8 @@ class TestStoryAnalysisWorker(unittest.TestCase):
         self.assertEqual(result["scenes"][0]["id"], 1)
         self.assertEqual(result["scenes"][-1]["id"], 20)
 
-    @patch('workers.call_model')
-    @patch('workers.validate_json_output')
+    @patch('workers.workers.call_model')
+    @patch('workers.workers.validate_json_output')
     def test_empty_script_handling(self, mock_validate, mock_call):
         """Test handling of empty script input."""
         mock_call.return_value = '{"scenes": []}'
@@ -67,8 +67,8 @@ class TestStoryAnalysisWorker(unittest.TestCase):
         self.assertIn("scenes", result)
         self.assertEqual(len(result["scenes"]), 0)
 
-    @patch('workers.call_model')
-    @patch('workers.validate_json_output')
+    @patch('workers.workers.call_model')
+    @patch('workers.workers.validate_json_output')
     def test_invalid_scene_structure_filtered(self, mock_validate, mock_call):
         """Test that invalid scene structures are filtered out."""
         # Mix of valid and invalid scenes
@@ -89,7 +89,7 @@ class TestStoryAnalysisWorker(unittest.TestCase):
         self.assertEqual(result["scenes"][0]["id"], 1)
         self.assertEqual(result["scenes"][1]["id"], 4)
 
-    @patch('workers.call_model')
+    @patch('workers.workers.call_model')
     def test_call_model_exception_handling(self, mock_call):
         """Test exception handling when call_model fails."""
         mock_call.side_effect = Exception("API call failed")
@@ -99,8 +99,8 @@ class TestStoryAnalysisWorker(unittest.TestCase):
         with self.assertRaises(Exception):
             self.worker.run(script)
 
-    @patch('workers.call_model')
-    @patch('workers.validate_json_output')
+    @patch('workers.workers.call_model')
+    @patch('workers.workers.validate_json_output')
     def test_validate_json_output_exception_handling(self, mock_validate, mock_call):
         """Test exception handling when JSON validation fails."""
         mock_call.return_value = 'invalid json'
@@ -111,8 +111,8 @@ class TestStoryAnalysisWorker(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.worker.run(script)
 
-    @patch('workers.call_model')
-    @patch('workers.validate_json_output')
+    @patch('workers.workers.call_model')
+    @patch('workers.workers.validate_json_output')
     def test_missing_scenes_key_in_response(self, mock_validate, mock_call):
         """Test handling when AI response doesn't contain 'scenes' key."""
         mock_call.return_value = '{"other_key": "value"}'
@@ -125,8 +125,8 @@ class TestStoryAnalysisWorker(unittest.TestCase):
         self.assertIn("scenes", result)
         self.assertEqual(len(result["scenes"]), 0)
 
-    @patch('workers.call_model')
-    @patch('workers.validate_json_output')
+    @patch('workers.workers.call_model')
+    @patch('workers.workers.validate_json_output')
     def test_scenes_not_list(self, mock_validate, mock_call):
         """Test handling when 'scenes' value is not a list."""
         mock_call.return_value = '{"scenes": "not a list"}'
@@ -138,22 +138,24 @@ class TestStoryAnalysisWorker(unittest.TestCase):
         # Should handle gracefully when scenes is not iterable
         self.assertIn("scenes", result)
 
-    @patch('workers.call_model')
-    @patch('workers.validate_json_output')
+    @patch('workers.workers.call_model')
+    @patch('workers.workers.validate_json_output')
     def test_prompt_construction(self, mock_validate, mock_call):
         """Test that prompt is constructed correctly."""
         mock_call.return_value = '{"scenes": []}'
         mock_validate.return_value = {"scenes": []}
 
-        script = "This is a test script for prompt construction."
+        # Create long script to test truncation (needs to be >800 chars)
+        script = "This is a test script for prompt construction. " * 20  # Makes it ~900 chars
         self.worker.run(script)
         
         # Verify call_model was called with expected prompt format
         args, kwargs = mock_call.call_args
         prompt = args[0]
         self.assertIn(str(config.MAX_SCENES), prompt)
-        self.assertIn("...", prompt)  # Truncation indicator
-        self.assertIn("This is a test script for prompt construction", prompt)  # Script content
+        # For long scripts, should be truncated (not present in full)
+        self.assertNotIn(script, prompt)  # Full script shouldn't be in prompt due to truncation
+        self.assertIn("This is a test script for prompt construction", prompt)  # Start should be present
 
 
 class TestBaseWorker(unittest.TestCase):
