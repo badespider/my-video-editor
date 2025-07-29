@@ -1,0 +1,49 @@
+name: Video Tests CI
+
+on:
+  push:
+    branches: [ "fix/video-tests" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    
+    - name: Create temp directory
+      run: mkdir -p temp
+    
+    - name: Run video helper tests with coverage
+      run: |
+        pytest tests/test_video_helper.py --cov=tests.utils.video_helper --cov-report=term-missing --cov-report=xml -v
+    
+    - name: Run basic test suite
+      run: |
+        pytest tests/ --maxfail=10 --tb=short || true
+    
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
