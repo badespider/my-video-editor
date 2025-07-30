@@ -28,7 +28,7 @@ const getWebSocketUrl = (path: string) => {
     // Replace the port number in the dynamic hostname (e.g., --3000-- to --8000--)
     const hostname = window.location.hostname.replace(/--3000--/, '--8000--');
     const wsUrl = `${protocol}//${hostname}${path}`;
-    return `${wsUrl}${path}`;
+    return wsUrl;
   }
   
   // Default for local development
