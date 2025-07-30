@@ -53,6 +53,8 @@ FRONTEND_ORIGIN = os.getenv('FRONTEND_ORIGIN', 'http://localhost:3000')
 
 # Backend-only CORS configuration (frontend disconnected)
 allowed_origins = [
+    "http://localhost:3000",  # Frontend development server
+    "http://127.0.0.1:3000",  # Alternative localhost format
     "http://localhost:8000",  # Backend itself for testing
     "http://127.0.0.1:8000",
     "*"  # Allow all origins for API testing (use with caution in production)
