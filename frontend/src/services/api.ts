@@ -1,17 +1,4 @@
 import axios, { AxiosProgressEvent } from 'axios';
-import {
-  VideoResponse,
-  VideoProcessResponse,
-  UploadResponse,
-  SessionInfo,
-  EditCommand,
-  TrimRequest,
-  ThumbnailRequest,
-  AnalysisRequest,
-  SuggestionsRequest,
-  OptimizationRequest,
-  ApiError
-} from '../types/api';
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -21,165 +8,89 @@ const api = axios.create({
 });
 
 // Request interceptor for logging
-api.interceptors.request.use((config) => {
-  console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
-  return config;
-});
-
-// Response interceptor for error handling
-api.interceptors.response.use(
-  (response) => response,
+api.interceptors.request.use(
+  (config) => {
+    console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+    return config;
+  },
   (error) => {
-    console.error('API Error:', error.response?.data || error.message);
+    console.error('API Request Error:', error);
     return Promise.reject(error);
   }
 );
 
-export class ApiService {
-  // Root endpoint
-  static async getRoot(): Promise<{ message: string }> {
-    const response = await api.get('/');
-    return response.data;
+// Response interceptor for logging and error handling
+api.interceptors.response.use(
+  (response) => {
+    console.log(`API Response: ${response.status} ${response.config.url}`);
+    return response;
+  },
+  (error) => {
+    console.error('API Response Error:', error.response?.status, error.response?.data);
+    return Promise.reject(error);
   }
+);
 
-  // Health check
-  static async getHealth(): Promise<{ status: string }> {
-    const response = await api.get('/health');
-    return response.data;
-  }
+export const apiService = {
+  // Root endpoint
+  getRoot: () => api.get('/').then(res => res.data),
 
   // Upload video
-  static async uploadVideo(
-    file: File,
-    onProgress?: (progress: number) => void
-  ): Promise<UploadResponse> {
+  uploadVideo: (file: File, onUploadProgress?: (progressEvent: AxiosProgressEvent) => void) => {
     const formData = new FormData();
     formData.append('file', file);
-
-    const response = await api.post('/upload/video', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      onUploadProgress: (progressEvent: AxiosProgressEvent) => {
-        if (progressEvent.total && onProgress) {
-          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          onProgress(progress);
-        }
-      },
-    });
-
-    return response.data;
-  }
+    return api.post('/upload/video', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress,
+    }).then(res => res.data);
+  },
 
   // Generate video from script
-  static async generateVideo(script: string, model?: string): Promise<VideoResponse> {
-    const response = await api.post('/generate', {
-      script,
-      model,
-    });
-    return response.data;
-  }
+  generateVideo: (data: { script: string; model?: string }) =>
+    api.post('/generate', data).then(res => res.data),
 
-  // Process uploaded video
-  static async processVideo(
-    file?: File,
-    videoPath?: string,
-    model?: string,
-    onProgress?: (progress: number) => void
-  ): Promise<VideoProcessResponse> {
-    if (file) {
-      const formData = new FormData();
-      formData.append('video', file);
-      if (model) formData.append('model', model);
+  // Process video
+  processVideo: (data: { video_path?: string; model?: string }) =>
+    api.post('/process_video', data).then(res => res.data),
 
-      const response = await api.post('/process_video', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        onUploadProgress: (progressEvent: AxiosProgressEvent) => {
-          if (progressEvent.total && onProgress) {
-            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            onProgress(progress);
-          }
-        },
-      });
+  // Apply edits
+  applyEdits: (sessionId: string, data: { edits: Array<{ command: string; parameters: any }> }) =>
+    api.post(`/apply_edits/${sessionId}`, data).then(res => res.data),
 
-      return response.data;
-    } else {
-      const response = await api.post('/process_video', {
-        video_path: videoPath,
-        model,
-      });
-      return response.data;
-    }
-  }
+  // Trim video
+  trimVideo: (sessionId: string, data: { start_time: number; end_time: number; preview_only?: boolean; quality?: string }) =>
+    api.post(`/trim/${sessionId}`, data).then(res => res.data),
 
-  // Session management
-  static async getSessionInfo(sessionId: string): Promise<SessionInfo> {
-    const response = await api.get(`/session/${sessionId}`);
-    return response.data;
-  }
+  // Preview video
+  getPreview: (sessionId: string, range?: string) => {
+    const headers = range ? { Range: range } : {};
+    return api.get(`/preview/${sessionId}`, { headers, responseType: 'blob' });
+  },
 
-  // Video editing
-  static async applyEdits(sessionId: string, edits: EditCommand[]): Promise<any> {
-    const response = await api.post(`/apply_edits/${sessionId}`, { edits });
-    return response.data;
-  }
+  // Finalize video
+  finalizeVideo: (sessionId: string) =>
+    api.post(`/finalize/${sessionId}`).then(res => res.data),
 
-  static async trimVideo(sessionId: string, trimRequest: TrimRequest): Promise<any> {
-    const response = await api.post(`/trim/${sessionId}`, trimRequest);
-    return response.data;
-  }
+  // Get session info
+  getSessionInfo: (sessionId: string) =>
+    api.get(`/session/${sessionId}`).then(res => res.data),
 
-  // Preview and finalization
-  static getPreviewUrl(sessionId: string): string {
-    return `${API_BASE_URL}/preview/${sessionId}`;
-  }
+  // Generate thumbnail
+  generateThumbnail: (sessionId: string, data: { time: string }) =>
+    api.post(`/thumbnail/${sessionId}`, data).then(res => res.data),
 
-  static getFileUrl(filename: string): string {
-    return `${API_BASE_URL}/file/${filename}`;
-  }
+  // Analyze video
+  analyzeVideo: (sessionId: string, data: { detailed?: boolean; preferences?: any }) =>
+    api.post(`/analyze/${sessionId}`, data).then(res => res.data),
 
-  static async finalizeVideo(sessionId: string): Promise<{ final_video_path: string }> {
-    const response = await api.post(`/finalize/${sessionId}`);
-    return response.data;
-  }
+  // Get suggestions
+  getSuggestions: (sessionId: string, data: { max_suggestions?: number }) =>
+    api.post(`/suggestions/${sessionId}`, data).then(res => res.data),
 
-  // Thumbnail generation
-  static async generateThumbnail(
-    sessionId: string,
-    thumbnailRequest: ThumbnailRequest
-  ): Promise<{ thumbnail_path: string; thumbnail_url: string }> {
-    const response = await api.post(`/thumbnail/${sessionId}`, thumbnailRequest);
-    return response.data;
-  }
+  // Optimize video
+  optimizeVideo: (sessionId: string, data: { target_platform?: string; quality_level?: string }) =>
+    api.post(`/optimization/${sessionId}`, data).then(res => res.data),
 
-  // AI Analysis
-  static async analyzeVideo(
-    sessionId: string,
-    analysisRequest: AnalysisRequest = {}
-  ): Promise<any> {
-    const response = await api.post(`/analyze/${sessionId}`, analysisRequest);
-    return response.data;
-  }
-
-  // AI Suggestions
-  static async getSuggestions(
-    sessionId: string,
-    suggestionsRequest: SuggestionsRequest = {}
-  ): Promise<any> {
-    const response = await api.post(`/suggestions/${sessionId}`, suggestionsRequest);
-    return response.data;
-  }
-
-  // Optimization
-  static async optimizeVideo(
-    sessionId: string,
-    optimizationRequest: OptimizationRequest = {}
-  ): Promise<any> {
-    const response = await api.post(`/optimize/${sessionId}`, optimizationRequest);
-    return response.data;
-  }
-}
-
-export default ApiService;
+  // Get file
+  getFile: (filename: string) => `${API_BASE_URL}/file/${filename}`,
+};

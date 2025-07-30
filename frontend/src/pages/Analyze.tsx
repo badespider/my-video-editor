@@ -1,403 +1,238 @@
 import React, { useState } from 'react';
-import {
-  Container,
-  Typography,
-  Box,
-  Button,
-  TextField,
-  FormControlLabel,
-  Switch,
-  Paper,
-  Grid,
-  Card,
-  CardContent,
-  Chip,
-  List,
-  ListItem,
-  ListItemText,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
-import { Analytics, ExpandMore, TrendingUp, Lightbulb, Tune } from '@mui/icons-material';
+import { Container, Typography, TextField, Button, Box, Paper, Alert, Switch, FormControlLabel } from '@mui/material';
 import { useAppContext } from '../context/AppContext';
-import ApiService from '../services/api';
-import ErrorAlert from '../components/Common/ErrorAlert';
-import LoadingSpinner from '../components/Common/LoadingSpinner';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { apiService } from '../services/api';
 
 const Analyze: React.FC = () => {
-  const { state } = useAppContext();
-  const [sessionId, setSessionId] = useState(state.currentSessionId || '');
-  const [detailed, setDetailed] = useState(true);
+  const [inputSessionId, setInputSessionId] = useState('');
+  const [detailed, setDetailed] = useState(false);
   const [preferences, setPreferences] = useState('{}');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
-  const [suggestionsResult, setSuggestionsResult] = useState<any>(null);
-  const [optimizationResult, setOptimizationResult] = useState<any>(null);
+  const [suggestions, setSuggestions] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { sessionId } = useAppContext();
+
+  const currentSessionId = sessionId || inputSessionId;
 
   const handleAnalyze = async () => {
-    if (!sessionId) {
-      setError('Please enter a session ID');
-      return;
-    }
+    if (!currentSessionId) return;
+
+    setAnalyzing(true);
+    setError(null);
 
     try {
-      setLoading(true);
-      setError(null);
-
-      let parsedPreferences = {};
+      let preferencesObj = {};
       try {
-        parsedPreferences = JSON.parse(preferences);
-      } catch {
+        preferencesObj = JSON.parse(preferences);
+      } catch (e) {
         // Use empty object if JSON is invalid
       }
 
-      const response = await ApiService.analyzeVideo(sessionId, {
+      const response = await apiService.analyzeVideo(currentSessionId, {
         detailed,
-        preferences: parsedPreferences,
+        preferences: preferencesObj
       });
-
       setAnalysisResult(response);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Analysis failed. Please try again.');
-      console.error('Analysis error:', err);
+    } catch (error: any) {
+      setError(error.response?.data?.detail || 'Analysis failed');
     } finally {
-      setLoading(false);
+      setAnalyzing(false);
     }
   };
 
   const handleGetSuggestions = async () => {
-    if (!sessionId) {
-      setError('Please enter a session ID');
-      return;
-    }
+    if (!currentSessionId) return;
 
     try {
-      setLoading(true);
-      const response = await ApiService.getSuggestions(sessionId, {
-        max_suggestions: 8,
+      const response = await apiService.getSuggestions(currentSessionId, {
+        max_suggestions: 5
       });
-      setSuggestionsResult(response);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to get suggestions');
-    } finally {
-      setLoading(false);
+      setSuggestions(response);
+      setError(null);
+    } catch (error: any) {
+      setError(error.response?.data?.detail || 'Failed to get suggestions');
     }
   };
 
   const handleOptimize = async () => {
-    if (!sessionId) {
-      setError('Please enter a session ID');
-      return;
-    }
+    if (!currentSessionId) return;
 
     try {
-      setLoading(true);
-      const response = await ApiService.optimizeVideo(sessionId, {
+      const response = await apiService.optimizeVideo(currentSessionId, {
         target_platform: 'youtube',
-        quality_level: 'high',
+        quality_level: 'high'
       });
-      setOptimizationResult(response);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Optimization failed');
-    } finally {
-      setLoading(false);
+      setAnalysisResult(response);
+      setError(null);
+    } catch (error: any) {
+      setError(error.response?.data?.detail || 'Optimization failed');
     }
-  };
-
-  const formatEmotionalData = (analysis: any) => {
-    if (!analysis?.emotional_arc?.progression) return [];
-    
-    return analysis.emotional_arc.progression.map((point: any, index: number) => ({
-      scene: `Scene ${index + 1}`,
-      intensity: point.intensity || 0,
-      position: point.position || 0,
-    }));
-  };
-
-  const formatSceneData = (analysis: any) => {
-    if (!analysis?.scenes) return [];
-    
-    return analysis.scenes.map((scene: any, index: number) => ({
-      name: `Scene ${index + 1}`,
-      duration: scene.duration || 0,
-      score: scene.score || 0,
-    }));
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg">
       <Typography variant="h4" component="h1" gutterBottom>
         AI Video Analysis
       </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        Get detailed insights, suggestions, and optimization recommendations for your videos.
-      </Typography>
 
-      {error && <ErrorAlert error={error} onClose={() => setError(null)} />}
+      <Paper sx={{ p: 4, mt: 3 }}>
+        {!sessionId && (
+          <TextField
+            fullWidth
+            label="Session ID"
+            placeholder="Enter session ID to analyze..."
+            value={inputSessionId}
+            onChange={(e) => setInputSessionId(e.target.value)}
+            sx={{ mb: 3 }}
+          />
+        )}
 
-      <Grid container spacing={4}>
-        {/* Analysis Controls */}
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
+        {sessionId && (
+          <Alert severity="info" sx={{ mb: 3 }}>
+            Analyzing session: {sessionId}
+          </Alert>
+        )}
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={detailed}
+              onChange={(e) => setDetailed(e.target.checked)}
+            />
+          }
+          label="Detailed Analysis"
+          sx={{ mb: 2 }}
+        />
+
+        <TextField
+          fullWidth
+          multiline
+          rows={3}
+          label="Analysis Preferences (JSON)"
+          placeholder='{"focus": "emotional_arc", "include_timestamps": true}'
+          value={preferences}
+          onChange={(e) => setPreferences(e.target.value)}
+          sx={{ mb: 3 }}
+        />
+
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
+          <Button
+            variant="contained"
+            onClick={handleAnalyze}
+            disabled={!currentSessionId || analyzing}
+          >
+            {analyzing ? 'Analyzing...' : 'Analyze Video'}
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleGetSuggestions}
+            disabled={!currentSessionId}
+          >
+            Get Suggestions
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleOptimize}
+            disabled={!currentSessionId}
+          >
+            Optimize
+          </Button>
+        </Box>
+      </Paper>
+
+      {analysisResult && (
+        <Paper sx={{ p: 4, mt: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Analysis Results
+          </Typography>
+          
+          {analysisResult.scenes && (
+            <Box sx={{ mb: 3 }}>
               <Typography variant="h6" gutterBottom>
-                Analysis Settings
+                Scenes ({analysisResult.scenes.length})
               </Typography>
-              
-              <TextField
-                fullWidth
-                label="Session ID"
-                value={sessionId}
-                onChange={(e) => setSessionId(e.target.value)}
-                sx={{ mb: 2 }}
-                placeholder="Enter session ID"
-              />
-
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={detailed}
-                    onChange={(e) => setDetailed(e.target.checked)}
-                  />
-                }
-                label="Detailed Analysis"
-                sx={{ mb: 2 }}
-              />
-
-              <TextField
-                fullWidth
-                multiline
-                rows={4}
-                label="Preferences (JSON)"
-                value={preferences}
-                onChange={(e) => setPreferences(e.target.value)}
-                placeholder='{"style": "cinematic", "pace": "moderate"}'
-                sx={{ mb: 3 }}
-                helperText="Optional JSON object with analysis preferences"
-              />
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Button
-                  variant="contained"
-                  startIcon={<Analytics />}
-                  onClick={handleAnalyze}
-                  disabled={!sessionId || loading}
-                  fullWidth
-                >
-                  Analyze Video
-                </Button>
-                
-                <Button
-                  variant="outlined"
-                  startIcon={<Lightbulb />}
-                  onClick={handleGetSuggestions}
-                  disabled={!sessionId || loading}
-                  fullWidth
-                >
-                  Get AI Suggestions
-                </Button>
-                
-                <Button
-                  variant="outlined"
-                  startIcon={<Tune />}
-                  onClick={handleOptimize}
-                  disabled={!sessionId || loading}
-                  fullWidth
-                >
-                  Optimize Video
-                </Button>
+              <Box sx={{ display: 'grid', gap: 2 }}>
+                {analysisResult.scenes.map((scene: any, index: number) => (
+                  <Paper key={index} sx={{ p: 2 }}>
+                    <Typography variant="subtitle1">
+                      Scene {index + 1}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {scene.description || 'No description available'}
+                    </Typography>
+                    {scene.timestamp && (
+                      <Typography variant="caption" display="block">
+                        Time: {scene.timestamp}
+                      </Typography>
+                    )}
+                  </Paper>
+                ))}
               </Box>
-            </CardContent>
-          </Card>
-        </Grid>
+            </Box>
+          )}
 
-        {/* Results Section */}
-        <Grid item xs={12} md={8}>
-          {loading && <LoadingSpinner message="Analyzing video with AI..." />}
-
-          {/* Analysis Results */}
-          {analysisResult && (
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h5" gutterBottom>
-                Analysis Results
+          {analysisResult.emotional_arc && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Emotional Arc
               </Typography>
+              <Paper sx={{ p: 2, backgroundColor: 'grey.100' }}>
+                <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>
+                  {JSON.stringify(analysisResult.emotional_arc, null, 2)}
+                </pre>
+              </Paper>
+            </Box>
+          )}
 
-              {/* Summary */}
-              <Card sx={{ mb: 3 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Summary
+          {analysisResult.insights && (
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Insights
+              </Typography>
+              <Paper sx={{ p: 2 }}>
+                <Typography variant="body1">
+                  {analysisResult.insights}
+                </Typography>
+              </Paper>
+            </Box>
+          )}
+        </Paper>
+      )}
+
+      {suggestions && (
+        <Paper sx={{ p: 4, mt: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            AI Suggestions
+          </Typography>
+          
+          {suggestions.suggestions && suggestions.suggestions.length > 0 && (
+            <Box sx={{ display: 'grid', gap: 2 }}>
+              {suggestions.suggestions.map((suggestion: any, index: number) => (
+                <Paper key={index} sx={{ p: 2, border: '1px solid #e0e0e0' }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    {suggestion.title || `Suggestion ${index + 1}`}
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                    {analysisResult.content_type && (
-                      <Chip label={`Type: ${analysisResult.content_type}`} color="primary" />
-                    )}
-                    {analysisResult.mood_analysis?.primary_mood && (
-                      <Chip label={`Mood: ${analysisResult.mood_analysis.primary_mood}`} color="secondary" />
-                    )}
-                    {analysisResult.quality_metrics?.overall_quality && (
-                      <Chip label={`Quality: ${(analysisResult.quality_metrics.overall_quality * 100).toFixed(0)}%`} />
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-
-              {/* Emotional Arc Chart */}
-              {analysisResult.emotional_arc && (
-                <Card sx={{ mb: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Emotional Progression
+                  <Typography variant="body2" color="text.secondary">
+                    {suggestion.description || suggestion}
+                  </Typography>
+                  {suggestion.confidence && (
+                    <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                      Confidence: {Math.round(suggestion.confidence * 100)}%
                     </Typography>
-                    <Box sx={{ height: 300, width: '100%' }}>
-                      <ResponsiveContainer>
-                        <LineChart data={formatEmotionalData(analysisResult)}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="scene" />
-                          <YAxis />
-                          <Tooltip />
-                          <Line type="monotone" dataKey="intensity" stroke="#1976d2" strokeWidth={2} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </Box>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Scene Analysis */}
-              {analysisResult.scenes && (
-                <Card sx={{ mb: 3 }}>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Scene Breakdown
-                    </Typography>
-                    <Box sx={{ height: 300, width: '100%' }}>
-                      <ResponsiveContainer>
-                        <BarChart data={formatSceneData(analysisResult)}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip />
-                          <Bar dataKey="duration" fill="#1976d2" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </Box>
-                  </CardContent>
-                </Card>
-              )}
+                  )}
+                </Paper>
+              ))}
             </Box>
           )}
-
-          {/* Suggestions Results */}
-          {suggestionsResult && (
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h5" gutterBottom>
-                AI Suggestions
-              </Typography>
-
-              <Card>
-                <CardContent>
-                  {suggestionsResult.suggestions?.map((suggestion: any, index: number) => (
-                    <Accordion key={index}>
-                      <AccordionSummary expandIcon={<ExpandMore />}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-                          <Typography variant="subtitle1">
-                            {suggestion.title || `Suggestion ${index + 1}`}
-                          </Typography>
-                          <Chip 
-                            label={suggestion.category || 'general'} 
-                            size="small" 
-                            color="primary" 
-                          />
-                          {suggestion.confidence && (
-                            <Chip 
-                              label={`${(suggestion.confidence * 100).toFixed(0)}%`} 
-                              size="small" 
-                              variant="outlined" 
-                            />
-                          )}
-                        </Box>
-                      </AccordionSummary>
-                      <AccordionDetails>
-                        <Typography variant="body2">
-                          {suggestion.description || 'No description available'}
-                        </Typography>
-                        {suggestion.parameters && (
-                          <Box sx={{ mt: 2 }}>
-                            <Typography variant="caption" color="text.secondary">
-                              Parameters: {JSON.stringify(suggestion.parameters)}
-                            </Typography>
-                          </Box>
-                        )}
-                      </AccordionDetails>
-                    </Accordion>
-                  ))}
-                </CardContent>
-              </Card>
-            </Box>
-          )}
-
-          {/* Optimization Results */}
-          {optimizationResult && (
-            <Box>
-              <Typography variant="h5" gutterBottom>
-                Optimization Recommendations
-              </Typography>
-
-              <Grid container spacing={2}>
-                {/* Technical Optimizations */}
-                {optimizationResult.technical_optimizations && (
-                  <Grid item xs={12} md={6}>
-                    <Card>
-                      <CardContent>
-                        <Typography variant="h6" gutterBottom>
-                          Technical Optimizations
-                        </Typography>
-                        <List dense>
-                          {optimizationResult.technical_optimizations.map((opt: any, index: number) => (
-                            <ListItem key={index}>
-                              <ListItemText
-                                primary={opt.recommendation}
-                                secondary={`${opt.type} - Priority: ${opt.priority}`}
-                              />
-                            </ListItem>
-                          ))}
-                        </List>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                )}
-
-                {/* Content Optimizations */}
-                {optimizationResult.content_optimizations && (
-                  <Grid item xs={12} md={6}>
-                    <Card>
-                      <CardContent>
-                        <Typography variant="h6" gutterBottom>
-                          Content Optimizations
-                        </Typography>
-                        <List dense>
-                          {optimizationResult.content_optimizations.map((opt: any, index: number) => (
-                            <ListItem key={index}>
-                              <ListItemText
-                                primary={opt.recommendation}
-                                secondary={`${opt.type} - Priority: ${opt.priority}`}
-                              />
-                            </ListItem>
-                          ))}
-                        </List>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                )}
-              </Grid>
-            </Box>
-          )}
-        </Grid>
-      </Grid>
+        </Paper>
+      )}
     </Container>
   );
 };
