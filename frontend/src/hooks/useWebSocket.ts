@@ -15,7 +15,25 @@ interface UseWebSocketReturn {
   error: string | null;
 }
 
-export const useWebSocket = (url: string, enabled: boolean = true): UseWebSocketReturn => {
+// Dynamic WebSocket URL that works in different environments
+const getWebSocketUrl = (path: string) => {
+  if (process.env.REACT_APP_WS_BASE_URL) {
+    return `${process.env.REACT_APP_WS_BASE_URL}${path}`;
+  }
+  
+  // In webcontainer or proxied environments
+  if (window.location.hostname.includes('webcontainer') || 
+      window.location.hostname.includes('local-credentialless')) {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = window.location.origin.replace('http', 'ws').replace('https', 'wss').replace(':3000', ':8000');
+    return `${wsUrl}${path}`;
+  }
+  
+  // Default for local development
+  return `ws://localhost:8000${path}`;
+};
+
+export const useWebSocket = (path: string, enabled: boolean = true): UseWebSocketReturn => {
   const [connectionStatus, setConnectionStatus] = useState<'Connecting' | 'Open' | 'Closing' | 'Closed'>('Closed');
   const [lastMessage, setLastMessage] = useState<WebSocketMessage | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +42,8 @@ export const useWebSocket = (url: string, enabled: boolean = true): UseWebSocket
   useEffect(() => {
     if (!enabled) return;
 
+    const url = getWebSocketUrl(path);
+    
     const connect = () => {
       try {
         setConnectionStatus('Connecting');
@@ -76,7 +96,7 @@ export const useWebSocket = (url: string, enabled: boolean = true): UseWebSocket
         ws.current.close(1000, 'Component unmounting');
       }
     };
-  }, [url, enabled]);
+  }, [path, enabled]);
 
   const sendMessage = (message: WebSocketMessage) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {

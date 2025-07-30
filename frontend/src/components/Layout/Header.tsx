@@ -1,11 +1,12 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
-import { Link, useLocation } from 'react-router-dom';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material';
+import { Brightness4, Brightness7 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../../context/AppContext';
 
 const Header: React.FC = () => {
-  const location = useLocation();
-  const { toggleTheme, theme } = useAppContext();
+  const navigate = useNavigate();
+  const { theme, toggleTheme } = useAppContext();
 
   const navItems = [
     { label: 'Home', path: '/' },
@@ -28,16 +29,15 @@ const Header: React.FC = () => {
             <Button
               key={item.path}
               color="inherit"
-              component={Link}
-              to={item.path}
-              variant={location.pathname === item.path ? 'outlined' : 'text'}
+              onClick={() => navigate(item.path)}
+              size="small"
             >
               {item.label}
             </Button>
           ))}
-          <Button color="inherit" onClick={toggleTheme}>
-            {theme === 'light' ? '🌙' : '☀️'}
-          </Button>
+          <IconButton color="inherit" onClick={toggleTheme}>
+            {theme === 'dark' ? <Brightness7 /> : <Brightness4 />}
+          </IconButton>
         </Box>
       </Toolbar>
     </AppBar>

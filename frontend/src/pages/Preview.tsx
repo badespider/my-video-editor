@@ -1,57 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, TextField, Button, Box, Paper, Alert } from '@mui/material';
+import { PlayArrow, GetApp } from '@mui/icons-material';
 import { useAppContext } from '../context/AppContext';
 import { apiService } from '../services/api';
 
 const Preview: React.FC = () => {
+  const { sessionId } = useAppContext();
   const [inputSessionId, setInputSessionId] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [sessionInfo, setSessionInfo] = useState<any>(null);
-  const [thumbnailTime, setThumbnailTime] = useState('00:05:00');
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { sessionId } = useAppContext();
+  const [sessionInfo, setSessionInfo] = useState<any>(null);
 
   const currentSessionId = sessionId || inputSessionId;
 
-  useEffect(() => {
-    if (currentSessionId) {
-      loadPreview();
-      loadSessionInfo();
-    }
-  }, [currentSessionId]);
-
   const loadPreview = async () => {
-    if (!currentSessionId) return;
-
-    try {
-      setPreviewUrl(`http://localhost:8000/preview/${currentSessionId}`);
-      setError(null);
-    } catch (error: any) {
-      setError('Failed to load preview');
+    if (!currentSessionId) {
+      setError('Please enter a session ID');
+      return;
     }
-  };
 
-  const loadSessionInfo = async () => {
-    if (!currentSessionId) return;
+    setLoading(true);
+    setError(null);
 
     try {
+      // Try to get session info first
       const info = await apiService.getSessionInfo(currentSessionId);
       setSessionInfo(info);
-    } catch (error: any) {
-      console.error('Failed to load session info:', error);
+
+      // Get preview video
+      const response = await apiService.getPreview(currentSessionId);
+      const blob = response.data;
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to load preview');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const generateThumbnail = async () => {
+  useEffect(() => {
+    if (sessionId) {
+      loadPreview();
+    }
+  }, [sessionId]);
+
+  const handleFinalize = async () => {
     if (!currentSessionId) return;
 
     try {
-      const response = await apiService.generateThumbnail(currentSessionId, { time: thumbnailTime });
-      setThumbnailUrl(`http://localhost:8000/file/${response.thumbnail_path}`);
-      setError(null);
-    } catch (error: any) {
-      setError(error.response?.data?.detail || 'Failed to generate thumbnail');
+      const response = await apiService.finalizeVideo(currentSessionId);
+      if (response.final_path) {
+        // Create download link
+        const link = document.createElement('a');
+        link.href = apiService.getFile(response.final_path);
+        link.download = 'final_video.mp4';
+        link.click();
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to finalize video');
     }
   };
 
@@ -63,19 +71,29 @@ const Preview: React.FC = () => {
 
       <Paper sx={{ p: 4, mt: 3 }}>
         {!sessionId && (
-          <TextField
-            fullWidth
-            label="Session ID"
-            placeholder="Enter session ID to preview..."
-            value={inputSessionId}
-            onChange={(e) => setInputSessionId(e.target.value)}
-            sx={{ mb: 3 }}
-          />
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              fullWidth
+              label="Session ID"
+              placeholder="Enter session ID to preview video..."
+              value={inputSessionId}
+              onChange={(e) => setInputSessionId(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <Button
+              variant="contained"
+              startIcon={<PlayArrow />}
+              onClick={loadPreview}
+              disabled={loading || !inputSessionId}
+            >
+              {loading ? 'Loading...' : 'Load Preview'}
+            </Button>
+          </Box>
         )}
 
         {sessionId && (
           <Alert severity="info" sx={{ mb: 3 }}>
-            Previewing session: {sessionId}
+            Previewing video from session: {sessionId}
           </Alert>
         )}
 
@@ -86,57 +104,40 @@ const Preview: React.FC = () => {
         )}
 
         {previewUrl && (
-          <Box sx={{ mb: 4 }}>
+          <Box sx={{ mb: 3 }}>
             <Typography variant="h6" gutterBottom>
               Video Preview
             </Typography>
             <video
               controls
-              style={{ width: '100%', maxWidth: '800px' }}
+              style={{ width: '100%', maxWidth: 800 }}
               src={previewUrl}
-            />
+            >
+              Your browser does not support the video tag.
+            </video>
+            
+            <Box sx={{ mt: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<GetApp />}
+                onClick={handleFinalize}
+                sx={{ mr: 2 }}
+              >
+                Finalize & Download
+              </Button>
+            </Box>
           </Box>
         )}
 
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            Generate Thumbnail
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
-            <TextField
-              label="Time (HH:MM:SS)"
-              value={thumbnailTime}
-              onChange={(e) => setThumbnailTime(e.target.value)}
-              placeholder="00:05:00"
-            />
-            <Button
-              variant="contained"
-              onClick={generateThumbnail}
-              disabled={!currentSessionId}
-            >
-              Generate
-            </Button>
-          </Box>
-          {thumbnailUrl && (
-            <img
-              src={thumbnailUrl}
-              alt="Video thumbnail"
-              style={{ maxWidth: '300px', border: '1px solid #ccc' }}
-            />
-          )}
-        </Box>
-
         {sessionInfo && (
-          <Box>
+          <Paper sx={{ p: 3, backgroundColor: 'grey.50' }}>
             <Typography variant="h6" gutterBottom>
               Session Information
             </Typography>
-            <Paper sx={{ p: 2, backgroundColor: 'grey.100' }}>
-              <pre style={{ whiteSpace: 'pre-wrap', margin: 0 }}>
-                {JSON.stringify(sessionInfo, null, 2)}
-              </pre>
-            </Paper>
-          </Box>
+            <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.875rem' }}>
+              {JSON.stringify(sessionInfo, null, 2)}
+            </pre>
+          </Paper>
         )}
       </Paper>
     </Container>

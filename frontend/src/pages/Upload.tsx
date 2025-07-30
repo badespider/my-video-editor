@@ -1,47 +1,58 @@
 import React, { useState } from 'react';
-import { Container, Typography, Box, Button, Paper, LinearProgress, Alert } from '@mui/material';
+import { Container, Typography, Button, Box, Paper, Alert, LinearProgress } from '@mui/material';
 import { CloudUpload } from '@mui/icons-material';
+import { useDropzone } from 'react-dropzone';
 import { useNavigate } from 'react-router-dom';
-import { useAppContext } from '../context/AppContext';
 import { apiService } from '../services/api';
+import { useAppContext } from '../context/AppContext';
 
 const Upload: React.FC = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-  const { setSessionId } = useAppContext();
   const navigate = useNavigate();
+  const { setSessionId } = useAppContext();
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = event.target.files?.[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      setError(null);
-    }
-  };
+  const onDrop = async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
 
-  const handleUpload = async () => {
-    if (!file) return;
-
+    const file = acceptedFiles[0];
     setUploading(true);
-    setProgress(0);
     setError(null);
+    setSuccess(null);
+    setUploadProgress(0);
 
     try {
       const response = await apiService.uploadVideo(file, (progressEvent) => {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
-        setProgress(percentCompleted);
+        if (progressEvent.total) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(progress);
+        }
       });
 
       setSessionId(response.session_id);
-      navigate('/preview');
-    } catch (error: any) {
-      setError(error.response?.data?.detail || 'Upload failed');
+      setSuccess(`Video uploaded successfully! Session ID: ${response.session_id}`);
+      
+      // Navigate to preview after a short delay
+      setTimeout(() => {
+        navigate('/preview');
+      }, 2000);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to upload video');
     } finally {
       setUploading(false);
     }
   };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'video/*': ['.mp4', '.mkv', '.avi', '.mov', '.wmv']
+    },
+    maxFiles: 1,
+    disabled: uploading
+  });
 
   return (
     <Container maxWidth="md">
@@ -51,49 +62,38 @@ const Upload: React.FC = () => {
 
       <Paper sx={{ p: 4, mt: 3 }}>
         <Box
+          {...getRootProps()}
           sx={{
-            border: '2px dashed #ccc',
+            border: 2,
+            borderColor: isDragActive ? 'primary.main' : 'grey.300',
+            borderStyle: 'dashed',
             borderRadius: 2,
-            p: 4,
+            p: 6,
             textAlign: 'center',
-            cursor: 'pointer',
-            '&:hover': {
-              borderColor: 'primary.main',
-              backgroundColor: 'action.hover',
-            },
+            cursor: uploading ? 'not-allowed' : 'pointer',
+            backgroundColor: isDragActive ? 'action.hover' : 'background.paper',
+            transition: 'all 0.2s ease-in-out',
           }}
-          onClick={() => document.getElementById('file-input')?.click()}
         >
-          <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+          <input {...getInputProps()} />
+          <CloudUpload sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
           <Typography variant="h6" gutterBottom>
-            {file ? file.name : 'Click to select a video file'}
+            {isDragActive ? 'Drop the video here...' : 'Drag & drop a video file here'}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Supported formats: MP4, MKV, AVI, MOV
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            or click to select a file
           </Typography>
-          <input
-            id="file-input"
-            type="file"
-            accept=".mp4,.mkv,.avi,.mov"
-            onChange={handleFileSelect}
-            style={{ display: 'none' }}
-          />
+          <Typography variant="caption" color="text.secondary">
+            Supported formats: MP4, MKV, AVI, MOV, WMV
+          </Typography>
         </Box>
-
-        {file && (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="body2" color="text.secondary">
-              File size: {(file.size / (1024 * 1024)).toFixed(2)} MB
-            </Typography>
-          </Box>
-        )}
 
         {uploading && (
           <Box sx={{ mt: 3 }}>
             <Typography variant="body2" gutterBottom>
-              Uploading... {progress}%
+              Uploading... {uploadProgress}%
             </Typography>
-            <LinearProgress variant="determinate" value={progress} />
+            <LinearProgress variant="determinate" value={uploadProgress} />
           </Box>
         )}
 
@@ -103,16 +103,11 @@ const Upload: React.FC = () => {
           </Alert>
         )}
 
-        <Box sx={{ mt: 3, textAlign: 'center' }}>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={handleUpload}
-            disabled={!file || uploading}
-          >
-            {uploading ? 'Uploading...' : 'Upload Video'}
-          </Button>
-        </Box>
+        {success && (
+          <Alert severity="success" sx={{ mt: 2 }}>
+            {success}
+          </Alert>
+        )}
       </Paper>
     </Container>
   );

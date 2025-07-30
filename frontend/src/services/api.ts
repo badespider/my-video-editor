@@ -1,6 +1,22 @@
 import axios, { AxiosProgressEvent } from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000';
+// Dynamic API base URL that works in different environments
+const getApiBaseUrl = () => {
+  if (process.env.REACT_APP_API_BASE_URL) {
+    return process.env.REACT_APP_API_BASE_URL;
+  }
+  
+  // In webcontainer or proxied environments, use relative URLs
+  if (window.location.hostname.includes('webcontainer') || 
+      window.location.hostname.includes('local-credentialless')) {
+    return window.location.origin.replace(':3000', ':8000');
+  }
+  
+  // Default for local development
+  return 'http://localhost:8000';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,

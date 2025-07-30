@@ -13,7 +13,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const useAppContext = () => {
   const context = useContext(AppContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAppContext must be used within an AppProvider');
   }
   return context;
@@ -24,39 +24,48 @@ interface AppProviderProps {
 }
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
-  const [sessionId, setSessionId] = useState<string | null>(
-    localStorage.getItem('sessionId')
-  );
+  const [sessionId, setSessionIdState] = useState<string | null>(null);
   const [apiStatus, setApiStatus] = useState<string>('Checking...');
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const saved = localStorage.getItem('theme');
-    return (saved as 'light' | 'dark') || 'light';
-  });
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
+  // Load session ID from localStorage on mount
   useEffect(() => {
-    if (sessionId) {
-      localStorage.setItem('sessionId', sessionId);
-    } else {
-      localStorage.removeItem('sessionId');
+    const savedSessionId = localStorage.getItem('videoEditor_sessionId');
+    if (savedSessionId) {
+      setSessionIdState(savedSessionId);
     }
-  }, [sessionId]);
 
-  useEffect(() => {
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+    const savedTheme = localStorage.getItem('videoEditor_theme') as 'light' | 'dark';
+    if (savedTheme) {
+      setTheme(savedTheme);
+    }
+  }, []);
+
+  const setSessionId = (id: string | null) => {
+    setSessionIdState(id);
+    if (id) {
+      localStorage.setItem('videoEditor_sessionId', id);
+    } else {
+      localStorage.removeItem('videoEditor_sessionId');
+    }
+  };
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    localStorage.setItem('videoEditor_theme', newTheme);
   };
 
-  const value = {
-    sessionId,
-    setSessionId,
-    apiStatus,
-    setApiStatus,
-    theme,
-    toggleTheme,
-  };
-
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={{
+      sessionId,
+      setSessionId,
+      apiStatus,
+      setApiStatus,
+      theme,
+      toggleTheme,
+    }}>
+      {children}
+    </AppContext.Provider>
+  );
 };

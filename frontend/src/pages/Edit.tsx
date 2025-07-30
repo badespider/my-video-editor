@@ -2,67 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { Container, Typography, TextField, Button, Box, Paper, Alert, List, ListItem, ListItemText } from '@mui/material';
 import { useAppContext } from '../context/AppContext';
 import { apiService } from '../services/api';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const Edit: React.FC = () => {
   const [inputSessionId, setInputSessionId] = useState('');
   const [command, setCommand] = useState('');
   const [messages, setMessages] = useState<string[]>([]);
-  const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { sessionId, setSessionId } = useAppContext();
-  const [ws, setWs] = useState<WebSocket | null>(null);
 
   const currentSessionId = sessionId || inputSessionId;
+  
+  const { sendMessage, lastMessage, connectionStatus } = useWebSocket(
+    `/ws/edit/${currentSessionId}`,
+    !!currentSessionId
+  );
 
   useEffect(() => {
-    if (currentSessionId && !ws) {
-      connectWebSocket();
+    if (lastMessage) {
+      setMessages(prev => [...prev, `Server: ${JSON.stringify(lastMessage)}`]);
     }
-    return () => {
-      if (ws) {
-        ws.close();
-      }
-    };
-  }, [currentSessionId]);
+  }, [lastMessage]);
 
-  const connectWebSocket = () => {
-    if (!currentSessionId) return;
-
-    const websocket = new WebSocket(`ws://localhost:8000/ws/edit/${currentSessionId}`);
-    
-    websocket.onopen = () => {
-      setConnected(true);
-      setError(null);
-      setMessages(prev => [...prev, 'Connected to editing session']);
-    };
-
-    websocket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setMessages(prev => [...prev, `Server: ${JSON.stringify(data)}`]);
-    };
-
-    websocket.onclose = () => {
-      setConnected(false);
-      setMessages(prev => [...prev, 'Disconnected from editing session']);
-    };
-
-    websocket.onerror = (error) => {
-      setError('WebSocket connection failed');
-      setConnected(false);
-    };
-
-    setWs(websocket);
-  };
-
-  const sendCommand = () => {
-    if (!ws || !command.trim()) return;
+  const handleSendCommand = () => {
+    if (!command.trim()) return;
 
     const message = {
       command: command,
       parameters: {}
     };
 
-    ws.send(JSON.stringify(message));
+    sendMessage(message);
     setMessages(prev => [...prev, `You: ${command}`]);
     setCommand('');
   };
@@ -111,13 +81,8 @@ const Edit: React.FC = () => {
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
           <Typography variant="body2">
-            Status: {connected ? '🟢 Connected' : '🔴 Disconnected'}
+            Status: {connectionStatus === 'Open' ? '🟢 Connected' : '🔴 Disconnected'}
           </Typography>
-          {!connected && currentSessionId && (
-            <Button variant="outlined" size="small" onClick={connectWebSocket}>
-              Reconnect
-            </Button>
-          )}
         </Box>
 
         {error && (
@@ -133,12 +98,12 @@ const Edit: React.FC = () => {
             placeholder="Enter editing command (e.g., 'trim video from 10s to 30s')"
             value={command}
             onChange={(e) => setCommand(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && sendCommand()}
+            onKeyPress={(e) => e.key === 'Enter' && handleSendCommand()}
           />
           <Button
             variant="contained"
-            onClick={sendCommand}
-            disabled={!connected || !command.trim()}
+            onClick={handleSendCommand}
+            disabled={connectionStatus !== 'Open' || !command.trim()}
           >
             Send
           </Button>

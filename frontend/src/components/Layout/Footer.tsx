@@ -34,11 +34,11 @@ const Footer: React.FC = () => {
         borderColor: 'divider',
       }}
     >
-      <Box display="flex" justifyContent="space-between" alignItems="center">
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="body2" color="text.secondary">
-          © 2024 AI Video Editor
+          AI Video Editor © 2024
         </Typography>
-        <Box display="flex" gap={2} alignItems="center">
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <Chip
             label={`API: ${apiStatus}`}
             color={apiStatus === 'Connected' ? 'success' : 'error'}
