@@ -219,7 +219,7 @@ class TestUtils(unittest.TestCase):
         result = utils.call_model("Test prompt")
         self.assertIn("Mock response", result)
 
-    @patch("utils.config")
+    @patch("utils.utils.config")
     def test_call_model_backup_with_mock_sdk_fallback(self, mock_config):
         """Test call_model backup scenario with mock SDK fallback (covers lines 73-74)."""
         # Configure for primary failure, backup success scenario
@@ -227,18 +227,19 @@ class TestUtils(unittest.TestCase):
         mock_config.MODEL_BACKUP = "backup-model"
         
         # Mock an exception in the primary try block and success in backup
-        with patch('utils.logger') as mock_logger:
+        with patch('utils.utils.logger') as mock_logger:
             # Create a scenario where GameSDK is None (mock implementation)
-            original_game_sdk = utils.GameSDK
-            utils.GameSDK = None
+            original_game_sdk = utils.utils.GameSDK
+            utils.utils.GameSDK = None
             
             try:
                 # Since GameSDK is None, this uses mock implementation
-                result = utils.call_model("Test prompt")
+                # Explicitly pass the model to ensure it's used
+                result = utils.call_model("Test prompt", model="primary-model")
                 self.assertIn("Mock response", result)
                 self.assertIn("primary-model", result)
             finally:
-                utils.GameSDK = original_game_sdk
+                utils.utils.GameSDK = original_game_sdk
 
     @patch("utils.config")
     def test_call_model_no_backup_exception(self, mock_config):

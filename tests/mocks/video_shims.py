@@ -11,9 +11,17 @@ for CI/CD pipeline compatibility.
 
 import os
 import subprocess
+import logging
 from unittest.mock import Mock, MagicMock, patch
 from typing import List, Tuple, Any, Optional, Union
 import pytest
+
+# Configure logging for mock mode indication
+logger = logging.getLogger(__name__)
+
+# Log when mock mode is enabled
+if os.getenv('MOCK_FFMPEG') == '1':
+    logger.info("Mock mode enabled - using video processing shims")
 
 
 class MockVideoFileClip:
@@ -326,6 +334,31 @@ def mock_speedx(factor: float):
     return effect_func
 
 
+def mock_trim_video(input_path: str, start: float, end: float, output_path: str) -> str:
+    """
+    Mock video trimming for testing purposes.
+    
+    Args:
+        input_path: Path to input video file
+        start: Start time in seconds
+        end: End time in seconds
+        output_path: Path to output trimmed video file
+        
+    Returns:
+        Path to the created mock trimmed video file
+    """
+    # Ensure directory exists
+    dirname = os.path.dirname(output_path)
+    if dirname:
+        os.makedirs(dirname, exist_ok=True)
+    
+    # Create mock trimmed file with placeholder content
+    with open(output_path, 'w') as f:
+        f.write(f"Mock trimmed from {start} to {end}")
+    
+    return output_path
+
+
 # Pytest fixture for automatic mocking when MOCK_FFMPEG=1
 @pytest.fixture(autouse=True)
 def video_shims():
@@ -471,6 +504,7 @@ __all__ = [
     'mock_fadein',
     'mock_fadeout', 
     'mock_speedx',
+    'mock_trim_video',
     'video_shims',
     'create_mock_video_file',
     'verify_mock_ffmpeg_active'

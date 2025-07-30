@@ -104,10 +104,6 @@ class TestPhase3Workers(unittest.TestCase):
         self.assertIn("mood_analysis", result)
         self.assertGreater(len(result["bgm_options"]), 0)
 
-    @patch('moviepy.VideoFileClip', MockVideoFileClip)
-    @patch('moviepy.concatenate_videoclips', mock_concatenate_videoclips)
-    @patch('moviepy.AudioFileClip', MagicMock)
-    @patch('moviepy.CompositeAudioClip', MagicMock)
     def test_assembly_worker(self):
         """Test AssemblyWorker assembles video clips into final video"""
         clips = {

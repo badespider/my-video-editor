@@ -10,6 +10,7 @@ import logging
 import json
 import os
 import re
+import time
 from typing import Dict, Any, Optional, List
 
 # Configure logging
@@ -483,7 +484,8 @@ class VideoAgent:
 
     def apply_command(self, session_data: dict, command: dict) -> None:
         """
-        Apply a parsed command to the session data.
+        Apply a parsed command to the session data with enhanced preview and validation.
+        Rule 3.1: Enhanced edit/preview limitations fixes.
 
         Args:
             session_data: The session data to update
@@ -492,20 +494,52 @@ class VideoAgent:
         Raises:
             ValueError: If the command is invalid or cannot be applied
         """
-        if not self._validate_command(command, ['type', 'params']):
-            raise ValueError("Invalid command structure")
+        if not self._validate_command(command, ['command', 'parameters']):
+            # Try alternative format
+            if not self._validate_command(command, ['type', 'params']):
+                raise ValueError("Invalid command structure - must have 'command'/'parameters' or 'type'/'params'")
+            # Convert to standard format
+            command = {'command': command['type'], 'parameters': command['params']}
 
         logger.info(f"Applying command: {command}")
-        command_type = command['type']
-        params = command['params']
+        command_type = command['command']
+        params = command['parameters']
+        
+        # Update last activity
+        import time
+        session_data['last_activity'] = time.time()
 
-        # Example implementation for a 'trim' command
-        if command_type == 'trim':
-            self._apply_trim_command(session_data, params)
+        try:
+            # Apply command based on type with enhanced validation
+            if command_type == 'trim':
+                self._apply_trim_command_enhanced(session_data, params)
+            elif command_type == 'adjust_volume':
+                self._apply_volume_command(session_data, params)
+            elif command_type == 'add_text':
+                self._apply_text_command(session_data, params)
+            elif command_type == 'crop':
+                self._apply_crop_command(session_data, params)
+            elif command_type == 'rotate':
+                self._apply_rotate_command(session_data, params)
+            elif command_type == 'speed_change':
+                self._apply_speed_command(session_data, params)
+            elif command_type == 'filter':
+                self._apply_filter_command(session_data, params)
+            else:
+                raise ValueError(f"Unsupported command type: {command_type}")
+                
+            # Generate updated preview after successful command application
+            self._update_session_preview(session_data, command_type, params)
+            
+            logger.info(f"Command '{command_type}' applied successfully")
+            
+        except Exception as e:
+            logger.error(f"Failed to apply command '{command_type}': {e}")
+            raise ValueError(f"Command application failed: {e}")
 
     def _apply_trim_command(self, session_data: dict, params: dict) -> None:
         """
-        Apply a trim command to the video session.
+        Apply a trim command to the video session with enhanced validation.
 
         Args:
             session_data: The session data containing video info
@@ -515,19 +549,52 @@ class VideoAgent:
             ValueError: If trim parameters are invalid
         """
         start = params.get('start')
-        end = params.get('end', session_data['video_duration'])
+        end = params.get('end')
+        video_duration = session_data.get('video_duration', 0)
         
-        if start is None or end is None or start < 0 or end <= start:
-            raise ValueError(f"Invalid trim parameters: start={start}, end={end}")
+        # Enhanced validation (Rule 1.3)
+        if start is None:
+            raise ValueError("Trim start parameter is required")
+        
+        if not isinstance(start, (int, float)) or start < 0:
+            raise ValueError(f"Invalid start time: {start}. Must be a non-negative number.")
+        
+        # If end is not provided, use video duration
+        if end is None:
+            if video_duration > 0:
+                end = video_duration
+            else:
+                raise ValueError("End time is required when video duration is unknown")
+        
+        if not isinstance(end, (int, float)):
+            raise ValueError(f"Invalid end time: {end}. Must be a number.")
+        
+        # Core validation: end must be greater than start
+        if end <= start:
+            raise ValueError(f"Invalid trim range: end ({end}) must be greater than start ({start})")
+        
+        # Video duration validation if available
+        if video_duration > 0:
+            if start >= video_duration:
+                raise ValueError(f"Start time ({start}) exceeds video duration ({video_duration})")
+            if end > video_duration:
+                logger.warning(f"End time ({end}) exceeds video duration ({video_duration}), clamping to duration")
+                end = video_duration
+        
+        # Minimum trim duration check
+        min_duration = 1.0  # 1 second minimum
+        trim_duration = end - start
+        if trim_duration < min_duration:
+            raise ValueError(f"Trim duration ({trim_duration}s) is too short. Minimum is {min_duration}s")
 
         # Placeholder logic for trimming video
         video_path = session_data['video_path']
         # Perform trimming logic here (e.g., using MoviePy or other libraries)
         new_path = f"{video_path}_trimmed_{start}_{end}.mp4"  # Dummy new path
         session_data['preview_path'] = new_path
-        session_data['edits'].append({'type': 'trim', 'params': params})
+        session_data['edits'].append({'type': 'trim', 'params': {'start': start, 'end': end}})
 
-        logger.info(f"Trim applied. Start: {start}, End: {end}, New Path: {new_path}")
+        logger.info(f"Trim applied. Start: {start}, End: {end}, Duration: {trim_duration}s, New Path: {new_path}")
 
     def finalize_video(self, session_data: dict) -> str:
         """
@@ -613,6 +680,269 @@ class VideoAgent:
             logger.error(f"Video finalization failed: {e}")
             # Return latest preview as fallback
             return session_data.get('preview_path', session_data.get('video_path', ''))
+
+    def _apply_trim_command_enhanced(self, session_data: dict, params: dict) -> None:
+        """
+        Enhanced trim command with improved preview generation and temp file management.
+        Rule 3.1: Enhanced edit/preview limitations fixes.
+        
+        Args:
+            session_data: The session data containing video info
+            params: Parameters for the trim command
+        """
+        try:
+            from utils.utils import trim_video
+            import tempfile
+            import uuid
+            
+            # Extract and validate parameters
+            start_time = params.get('start_time', params.get('start', 0))
+            end_time = params.get('end_time', params.get('end'))
+            
+            # Enhanced parameter validation
+            if not isinstance(start_time, (int, float)) or start_time < 0:
+                raise ValueError(f"Invalid start time: {start_time}. Must be a non-negative number.")
+                
+            if end_time is not None and (not isinstance(end_time, (int, float)) or end_time <= start_time):
+                raise ValueError(f"Invalid end time: {end_time}. Must be a number greater than start time.")
+                
+            # Get current video path (use latest preview if available)
+            current_video = session_data.get('preview_path') or session_data.get('video_path')
+            if not current_video or not os.path.exists(current_video):
+                raise ValueError("No valid video file found for trimming")
+                
+            # Clean up old preview if it exists and is different from original
+            old_preview = session_data.get('preview_path')
+            if old_preview and old_preview != session_data.get('video_path') and os.path.exists(old_preview):
+                try:
+                    os.remove(old_preview)
+                    logger.info(f"Cleaned up old preview: {old_preview}")
+                except Exception as cleanup_error:
+                    logger.warning(f"Failed to cleanup old preview: {cleanup_error}")
+                    
+            # Generate new preview path
+            session_id = session_data.get('session_id', str(uuid.uuid4())[:8])
+            preview_filename = f"preview_{session_id}_{len(session_data.get('edits', []))}_{int(time.time())}.mp4"
+            preview_path = os.path.join(config.VIDEO_OUTPUT_DIR, preview_filename)
+            
+            # Ensure output directory exists
+            os.makedirs(config.VIDEO_OUTPUT_DIR, exist_ok=True)
+            
+            # Convert time parameters to string format for trim_video function
+            def seconds_to_time_string(seconds: float) -> str:
+                hours = int(seconds // 3600)
+                minutes = int((seconds % 3600) // 60)
+                secs = int(seconds % 60)
+                return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+                
+            start_time_str = seconds_to_time_string(start_time)
+            end_time_str = seconds_to_time_string(end_time) if end_time else None
+            
+            # Perform the trim operation
+            trim_video(current_video, start_time_str, end_time_str, preview_path)
+            
+            # Update session data
+            session_data['preview_path'] = preview_path
+            
+            # Add edit to history with timestamp
+            edit_record = {
+                'type': 'trim',
+                'params': {'start_time': start_time, 'end_time': end_time},
+                'timestamp': time.time(),
+                'preview_path': preview_path
+            }
+            session_data['edits'].append(edit_record)
+            
+            logger.info(f"Enhanced trim applied: {start_time}-{end_time}s, preview: {preview_path}")
+            
+        except Exception as e:
+            logger.error(f"Enhanced trim command failed: {e}")
+            raise ValueError(f"Trim operation failed: {e}")
+            
+    def _apply_volume_command(self, session_data: dict, params: dict) -> None:
+        """
+        Apply volume adjustment command.
+        """
+        try:
+            volume_level = params.get('level', params.get('volume', 1.0))
+            
+            if not isinstance(volume_level, (int, float)) or volume_level < 0:
+                raise ValueError(f"Invalid volume level: {volume_level}. Must be a non-negative number.")
+                
+            # Placeholder for volume adjustment logic
+            edit_record = {
+                'type': 'adjust_volume',
+                'params': {'volume': volume_level},
+                'timestamp': time.time()
+            }
+            session_data['edits'].append(edit_record)
+            
+            logger.info(f"Volume adjustment applied: {volume_level}")
+            
+        except Exception as e:
+            logger.error(f"Volume command failed: {e}")
+            raise ValueError(f"Volume adjustment failed: {e}")
+            
+    def _apply_text_command(self, session_data: dict, params: dict) -> None:
+        """
+        Apply text overlay command.
+        """
+        try:
+            text = params.get('text', '')
+            position = params.get('position', 'center')
+            duration = params.get('duration', 5.0)
+            
+            if not text:
+                raise ValueError("Text content is required")
+                
+            # Placeholder for text overlay logic
+            edit_record = {
+                'type': 'add_text',
+                'params': {'text': text, 'position': position, 'duration': duration},
+                'timestamp': time.time()
+            }
+            session_data['edits'].append(edit_record)
+            
+            logger.info(f"Text overlay applied: '{text}' at {position} for {duration}s")
+            
+        except Exception as e:
+            logger.error(f"Text command failed: {e}")
+            raise ValueError(f"Text overlay failed: {e}")
+            
+    def _apply_crop_command(self, session_data: dict, params: dict) -> None:
+        """
+        Apply crop command.
+        """
+        try:
+            x = params.get('x', 0)
+            y = params.get('y', 0)
+            width = params.get('width')
+            height = params.get('height')
+            
+            if width is None or height is None:
+                raise ValueError("Width and height are required for cropping")
+                
+            # Placeholder for crop logic
+            edit_record = {
+                'type': 'crop',
+                'params': {'x': x, 'y': y, 'width': width, 'height': height},
+                'timestamp': time.time()
+            }
+            session_data['edits'].append(edit_record)
+            
+            logger.info(f"Crop applied: {x},{y} {width}x{height}")
+            
+        except Exception as e:
+            logger.error(f"Crop command failed: {e}")
+            raise ValueError(f"Crop operation failed: {e}")
+            
+    def _apply_rotate_command(self, session_data: dict, params: dict) -> None:
+        """
+        Apply rotation command.
+        """
+        try:
+            angle = params.get('angle', 90)
+            
+            if not isinstance(angle, (int, float)):
+                raise ValueError(f"Invalid rotation angle: {angle}. Must be a number.")
+                
+            # Placeholder for rotation logic
+            edit_record = {
+                'type': 'rotate',
+                'params': {'angle': angle},
+                'timestamp': time.time()
+            }
+            session_data['edits'].append(edit_record)
+            
+            logger.info(f"Rotation applied: {angle} degrees")
+            
+        except Exception as e:
+            logger.error(f"Rotate command failed: {e}")
+            raise ValueError(f"Rotation failed: {e}")
+            
+    def _apply_speed_command(self, session_data: dict, params: dict) -> None:
+        """
+        Apply speed change command.
+        """
+        try:
+            speed_factor = params.get('factor', params.get('speed', 1.0))
+            
+            if not isinstance(speed_factor, (int, float)) or speed_factor <= 0:
+                raise ValueError(f"Invalid speed factor: {speed_factor}. Must be a positive number.")
+                
+            # Placeholder for speed change logic
+            edit_record = {
+                'type': 'speed_change',
+                'params': {'factor': speed_factor},
+                'timestamp': time.time()
+            }
+            session_data['edits'].append(edit_record)
+            
+            logger.info(f"Speed change applied: {speed_factor}x")
+            
+        except Exception as e:
+            logger.error(f"Speed command failed: {e}")
+            raise ValueError(f"Speed change failed: {e}")
+            
+    def _apply_filter_command(self, session_data: dict, params: dict) -> None:
+        """
+        Apply video filter command.
+        """
+        try:
+            filter_type = params.get('type', params.get('filter', 'none'))
+            intensity = params.get('intensity', 0.5)
+            
+            if not isinstance(intensity, (int, float)) or not (0 <= intensity <= 1):
+                raise ValueError(f"Invalid filter intensity: {intensity}. Must be between 0 and 1.")
+                
+            # Placeholder for filter logic
+            edit_record = {
+                'type': 'filter',
+                'params': {'filter_type': filter_type, 'intensity': intensity},
+                'timestamp': time.time()
+            }
+            session_data['edits'].append(edit_record)
+            
+            logger.info(f"Filter applied: {filter_type} at {intensity} intensity")
+            
+        except Exception as e:
+            logger.error(f"Filter command failed: {e}")
+            raise ValueError(f"Filter application failed: {e}")
+            
+    def _update_session_preview(self, session_data: dict, command_type: str, params: dict) -> None:
+        """
+        Update session preview after successful command application.
+        Rule 3.1: Ensure session preview is updated correctly after every edit.
+        
+        Args:
+            session_data: Session data to update
+            command_type: Type of command that was applied
+            params: Parameters of the applied command
+        """
+        try:
+            # For commands that create new preview files (like trim), the preview is already updated
+            if command_type == 'trim':
+                # Already handled in _apply_trim_command_enhanced
+                return
+                
+            # For other commands, generate a new preview if needed
+            current_preview = session_data.get('preview_path')
+            if current_preview and os.path.exists(current_preview):
+                # Preview path is valid, no immediate update needed
+                # This will be updated during finalization
+                logger.info(f"Preview state maintained for {command_type} command")
+            else:
+                # Reset to original video path if preview is missing
+                original_video = session_data.get('video_path')
+                if original_video and os.path.exists(original_video):
+                    session_data['preview_path'] = original_video
+                    logger.info(f"Preview reset to original video for {command_type} command")
+                else:
+                    logger.warning(f"No valid video path available for preview update after {command_type}")
+                    
+        except Exception as e:
+            logger.error(f"Failed to update session preview after {command_type}: {e}")
+            # Don't raise error here to avoid breaking the command application flow
 
 def analyze_story(script: str) -> Dict[str, Any]:
     """Standalone function for story analysis."""

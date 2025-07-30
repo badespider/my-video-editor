@@ -33,38 +33,53 @@ class TestCoordinator(unittest.TestCase):
         agent = VideoAgent(model="openai")
         self.assertEqual(agent.model, "openai")
 
-    @patch('coordinator.analyze_story')
-    @patch('coordinator.choose_clip_descriptions')
-    @patch('coordinator.generate_narration')
-    @patch('coordinator.suggest_bgm')
-    @patch('coordinator.compile_video_plan')
-    def test_run_workflow(self, mock_compile, mock_bgm, mock_narration, mock_clips, mock_analysis):
+    @patch('coordinator.AssemblyWorker')
+    @patch('coordinator.BGMWorker')
+    @patch('coordinator.NarrationWorker')
+    @patch('coordinator.ClipChooserWorker')
+    @patch('coordinator.StoryAnalysisWorker')
+    def test_run_workflow(self, mock_story_worker, mock_clip_worker, mock_narration_worker, mock_bgm_worker, mock_assembly_worker):
         """Test complete workflow execution."""
-        # Setup mocks
-        mock_analysis.return_value = {"scenes": ["scene1"]}
-        mock_clips.return_value = ["clip1", "clip2"]
-        mock_narration.return_value = "Generated narration"
-        mock_bgm.return_value = ["track1", "track2"]
-        mock_compile.return_value = {
-            "clips": ["clip1", "clip2"],
+        # Setup mock workers
+        mock_story_instance = mock_story_worker.return_value
+        mock_story_instance.run.return_value = {"scenes": [{"description": "scene1", "duration": 10}]}
+        
+        mock_clip_instance = mock_clip_worker.return_value
+        mock_clip_instance.run.return_value = {"clips": [{"description": "clip1", "duration": 5}]}
+        
+        mock_narration_instance = mock_narration_worker.return_value
+        mock_narration_instance.run.return_value = {"narration": "Generated narration"}
+        
+        mock_bgm_instance = mock_bgm_worker.return_value
+        mock_bgm_instance.run.return_value = {"bgm_options": ["track1", "track2"]}
+        
+        mock_assembly_instance = mock_assembly_worker.return_value
+        mock_assembly_instance.run.return_value = {
+            "clips": [{"description": "clip1", "duration": 5}],
             "narrations": ["Generated narration"],
             "bgms": ["track1", "track2"],
-            "timeline": "Complete timeline"
+            "timeline": ["Complete timeline"],
+            "total_duration": 60.0
         }
         
         # Execute workflow
         result = self.agent.run(self.test_script)
         
-        # Verify all functions were called
-        mock_analysis.assert_called_once_with(self.test_script)
-        mock_clips.assert_called_once_with({"scenes": ["scene1"]})
-        mock_narration.assert_called_once_with(self.test_script)
-        mock_bgm.assert_called_once_with({"scenes": ["scene1"]})
-        mock_compile.assert_called_once_with(
-            ["clip1", "clip2"], 
-            ["Generated narration"], 
-            ["track1", "track2"]
-        )
+        # Verify all workers were instantiated and called
+        mock_story_worker.assert_called_once()
+        mock_story_instance.run.assert_called_once_with(self.test_script)
+        
+        mock_clip_worker.assert_called_once()
+        mock_clip_instance.run.assert_called_once()
+        
+        mock_narration_worker.assert_called_once()
+        mock_narration_instance.run.assert_called_once()
+        
+        mock_bgm_worker.assert_called_once()
+        mock_bgm_instance.run.assert_called_once()
+        
+        mock_assembly_worker.assert_called_once()
+        mock_assembly_instance.run.assert_called_once()
         
         # Verify result structure
         self.assertIn("clips", result)

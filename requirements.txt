@@ -1,8 +1,35 @@
+# Core dependencies
 game-by-virtuals
 fastapi
 uvicorn[standard]
 websockets
 python-multipart
-pytest
-pytest-cov
-websocket-client
+
+# Testing dependencies (Rule 5.1: Comprehensive Testing)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-asyncio>=0.21.0
+pytest-mock>=3.10.0
+pytest-xdist>=3.0.0
+pytest-timeout>=2.1.0
+pytest-html>=3.1.0
+websocket-client>=1.5.0
+httpx>=0.24.0
+responses>=0.23.0
+factory-boy>=3.2.0
+faker>=18.0.0
+
+# Development and debugging
+ipdb>=0.13.0
+pytest-benchmark>=4.0.0
+memory-profiler>=0.60.0
+
+# Code quality and linting
+flake8>=6.0.0
+black>=23.0.0
+isort>=5.12.0
+mypy>=1.0.0
+
+# Documentation
+sphinx>=6.0.0
+sphinx-rtd-theme>=1.2.0
