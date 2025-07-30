@@ -25,7 +25,9 @@ const getWebSocketUrl = (path: string) => {
   if (window.location.hostname.includes('webcontainer') || 
       window.location.hostname.includes('local-credentialless')) {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = window.location.origin.replace('http', 'ws').replace('https', 'wss').replace(':3000', ':8000');
+    // Replace the port number in the dynamic hostname (e.g., --3000-- to --8000--)
+    const hostname = window.location.hostname.replace(/--3000--/, '--8000--');
+    const wsUrl = `${protocol}//${hostname}${path}`;
     return `${wsUrl}${path}`;
   }
   
