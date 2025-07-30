@@ -28,7 +28,8 @@ const Edit: React.FC = () => {
     if (!command.trim()) return;
 
     const message = {
-      command: command,
+      type: 'command',
+      command,
       parameters: {}
     };
 

@@ -67,7 +67,7 @@ const Analyze: React.FC = () => {
         quality_level: quality
       });
       
-      setAnalysis(prev => ({
+      setAnalysis((prev: any) => ({
         ...prev,
         optimization: response
       }));
