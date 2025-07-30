@@ -9,7 +9,7 @@ const getApiBaseUrl = () => {
   // In webcontainer or proxied environments, use relative URLs
   if (window.location.hostname.includes('webcontainer') || 
       window.location.hostname.includes('local-credentialless')) {
-    return window.location.origin.replace(':3000', ':8000');
+    return '/api';  // Use relative path for proxy
   }
   
   // Default for local development
