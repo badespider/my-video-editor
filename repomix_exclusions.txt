@@ -1,0 +1,11 @@
+Root directory: C:\my_video_editor
+
+Exclusion pattern for repomix --exclude-pattern flag:
+build\,dist\,.git\,.venv\,__pycache__\,node_modules\,bin\,obj\,*.pyc,*.pyo,*.o,*.obj,*.exe,*.dll,*.class,*.log
+
+Breakdown of exclusions:
+- Directories: build\, dist\, .git\, .venv\, __pycache__\, node_modules\, bin\, obj\
+- File extensions: *.pyc, *.pyo, *.o, *.obj, *.exe, *.dll, *.class, *.log
+
+Usage example:
+repomix --exclude-pattern "build\,dist\,.git\,.venv\,__pycache__\,node_modules\,bin\,obj\,*.pyc,*.pyo,*.o,*.obj,*.exe,*.dll,*.class,*.log" C:\my_video_editor

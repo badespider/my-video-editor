@@ -1,0 +1,20 @@
+root: C:\my_video_editor
+output: C:\Users\dimit\Videos\anime\my_video_editor_codebase.md
+format: markdown
+include_tree: true
+exclude:
+  - build/**
+  - dist/**
+  - .git/**
+  - .venv/**
+  - __pycache__/**
+  - node_modules/**
+  - bin/**
+  - obj/**
+  - "*.pyc"
+  - "*.pyo"
+  - "*.o"
+  - "*.exe"
+  - "*.dll"
+  - "*.class"
+  - "*.log"
