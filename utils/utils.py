@@ -654,6 +654,57 @@ def _detect_scenes_mock(video_path: str) -> List[Dict[str, Any]]:
     
     logger.info(f"Mock scene detection: Generated {len(scenes)} scenes covering {total_duration:.1f}s")
     return scenes
+async def call_memories_api(endpoint: str, payload: dict, timeout: int = None) -> dict:
+    """
+    Call Memories.ai backend (Rule 6.1) with graceful fallback on failure.
+    - Uses aiohttp for async requests
+    - Applies timeouts and basic client-side throttling
+    - On error, returns placeholder result but logs the error
+    """
+    import aiohttp
+    import asyncio
+    import config
+
+    timeout = timeout or getattr(config, 'API_TIMEOUT', 30)
+
+    # Simple client-side throttle: max 5 calls/min (Rule 6.1)
+    # Using an in-process semaphore and delay to spread calls.
+    if not hasattr(call_memories_api, "_sem"):
+        call_memories_api._sem = asyncio.Semaphore(5)
+        call_memories_api._last_call = 0.0
+
+    url = f"{getattr(config, 'MEMORIES_AI_BASE_URL', 'https://api.memories.ai/v1').rstrip('/')}/{endpoint.lstrip('/')}"
+    headers = {
+        "Authorization": f"Bearer {getattr(config, 'MEMORIES_AI_KEY', '')}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    # If real AI disabled or key missing, fallback immediately
+    if not getattr(config, 'USE_REAL_AI', False) or not headers["Authorization"].strip():
+        logger.warning("USE_REAL_AI disabled or missing MEMORIES_AI_KEY; using placeholder.")
+        return call_memories_placeholder(payload.get('video_path') or payload)
+
+    try:
+        async with call_memories_api._sem:
+            # Spread calls to ~5 per minute if needed
+            now = time.time()
+            delta = now - call_memories_api._last_call
+            if delta < 12.5:  # 60s/5 calls
+                await asyncio.sleep(12.5 - delta)
+            call_memories_api._last_call = time.time()
+
+            timeout_ctx = aiohttp.ClientTimeout(total=timeout)
+            async with aiohttp.ClientSession(timeout=timeout_ctx) as session:
+                async with session.post(url, json=payload, headers=headers) as resp:
+                    if resp.status >= 400:
+                        text = await resp.text()
+                        raise ModelCallError(f"Memories.ai {endpoint} HTTP {resp.status}: {text}")
+                    return await resp.json()
+    except Exception as e:
+        logger.error(f"Memories.ai call failed ({endpoint}): {e}. Falling back to placeholder.")
+        return call_memories_placeholder(payload.get('video_path') or payload)
+
 def call_memories_placeholder(video_path: str, detailed: bool = True) -> dict:
     """Simulates the Memories.ai analysis, providing a structured JSON response for the frontend."""
     logger.info(f"Simulating Memories.ai analysis for: {video_path}")

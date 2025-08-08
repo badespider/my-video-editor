@@ -333,8 +333,20 @@ class WorkflowOrchestrator:
         # Perform comprehensive analysis
         analysis = analyze_video_content(session.video_path, detailed=True)
         
-        # Also get Memories.ai analysis
-        memories_analysis = call_memories_placeholder(session.video_path, detailed=True)
+# Also get Memories.ai analysis (real API if enabled, else placeholder)
+        try:
+            if getattr(config, 'USE_REAL_AI', False):
+                # Prefer real API when enabled
+                from utils.utils import call_memories_api
+                memories_analysis = await call_memories_api(
+                    endpoint="analyze",
+                    payload={"video_path": session.video_path, "detailed": True}
+                )
+            else:
+                memories_analysis = call_memories_placeholder(session.video_path, detailed=True)
+        except Exception as _e:
+            logger.warning(f"Memories.ai analysis failed, using placeholder: {_e}")
+            memories_analysis = call_memories_placeholder(session.video_path, detailed=True)
         
         # Combine analyses
         combined_analysis = {

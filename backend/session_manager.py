@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 class SessionData:
     """Structured session data with serialization support."""
     session_id: str
+    user_id: str = 'guest'
     video_path: Optional[str] = None
     preview_path: Optional[str] = None
     edits: List[Dict] = None
@@ -288,7 +289,7 @@ class SessionManager:
         
         logger.info("Session manager stopped")
     
-    async def create_session(self, filename: str = None, file_size: int = 0) -> str:
+    async def create_session(self, filename: str = None, file_size: int = 0, user_id: str = 'guest') -> str:
         """Create a new session."""
         # Check session limit
         current_count = await self.store.count()
@@ -298,6 +299,7 @@ class SessionManager:
         session_id = str(uuid.uuid4())
         session_data = SessionData(
             session_id=session_id,
+            user_id=user_id,
             filename=filename,
             file_size=file_size
         )
