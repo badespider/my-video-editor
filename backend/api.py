@@ -35,6 +35,11 @@ from coordinator import VideoAgent
 import config
 from utils.utils import call_memories_placeholder, trim_video, apply_edit_commands, generate_video_thumbnail, suggest_video_edits, analyze_video_content, generate_optimization_recommendations
 
+# Auth
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import jwt
+from datetime import datetime, timedelta
+
 # Phase 1: Session Management (Rule 1.1)
 # Initialize FastAPI app with lifespan context
 
@@ -47,6 +52,48 @@ async def lifespan_context(app: FastAPI):
     # Cleanup on shutdown
     await session_manager.stop()
 app = FastAPI(title="AI Video Creation API", lifespan=lifespan_context)
+
+security = HTTPBearer(auto_error=False)
+
+# Mock users for dev (can be moved to config if needed)
+MOCK_USERS = {
+    "admin": {"password": "admin", "role": "admin"},
+    "user": {"password": "user", "role": "user"},
+}
+
+
+def generate_jwt(user_id: str, role: str = "user", expires_in: int = None) -> str:
+    exp_seconds = expires_in or getattr(config, 'ACCESS_TOKEN_EXPIRES_SECONDS', 3600)
+    payload = {
+        "sub": user_id,
+        "role": role,
+        "exp": datetime.utcnow() + timedelta(seconds=exp_seconds),
+        "iat": datetime.utcnow(),
+        "nbf": datetime.utcnow(),
+    }
+    return jwt.encode(payload, getattr(config, 'JWT_SECRET', 'dev'), algorithm=getattr(config, 'JWT_ALGORITHM', 'HS256'))
+
+
+def decode_jwt(token: str) -> dict:
+    return jwt.decode(token, getattr(config, 'JWT_SECRET', 'dev'), algorithms=[getattr(config, 'JWT_ALGORITHM', 'HS256')])
+
+
+async def get_current_user(request: Request, credentials: HTTPAuthorizationCredentials = None):
+    # Only enforce auth when configured
+    if getattr(config, 'WS_TOKEN_VALIDATION', 'simple') != 'jwt':
+        return {"user_id": "guest", "role": "user"}
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Authorization required")
+    try:
+        token = credentials.credentials
+        data = decode_jwt(token)
+        request.state.user_id = data.get("sub", "guest")
+        request.state.role = data.get("role", "user")
+        return {"user_id": request.state.user_id, "role": request.state.role}
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 # Configure CORS for frontend integration (Phase 1: Rule 1.1)
 FRONTEND_ORIGIN = os.getenv('FRONTEND_ORIGIN', 'http://localhost:3000')
@@ -185,6 +232,49 @@ class WorkflowStartRequest(BaseModel):
 async def root():
     """Root endpoint."""
     return {"message": "AI Video Creation API"}
+
+
+# Auth endpoints (Rule 6.2)
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+@app.post("/auth/login", response_model=TokenResponse)
+async def login(req: LoginRequest):
+    user = MOCK_USERS.get(req.username)
+    if not user or user.get("password") != req.password:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = generate_jwt(user_id=req.username, role=user.get("role", "user"))
+    return {"access_token": token, "token_type": "bearer"}
+
+
+class RefreshRequest(BaseModel):
+    token: str
+
+
+@app.post("/auth/refresh", response_model=TokenResponse)
+async def refresh(req: RefreshRequest):
+    # Basic refresh: validate old token, issue new one with fresh expiry
+    try:
+        data = decode_jwt(req.token)
+        new_token = generate_jwt(user_id=data.get("sub", "user"), role=data.get("role", "user"))
+        return {"access_token": new_token, "token_type": "bearer"}
+    except jwt.ExpiredSignatureError:
+        # Even if expired, we can extract without verifying exp by options
+        try:
+            data = jwt.decode(req.token, getattr(config, 'JWT_SECRET', 'dev'), algorithms=[getattr(config, 'JWT_ALGORITHM', 'HS256')], options={"verify_exp": False})
+            new_token = generate_jwt(user_id=data.get("sub", "user"), role=data.get("role", "user"))
+            return {"access_token": new_token, "token_type": "bearer"}
+        except Exception:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 @app.post("/upload/video")

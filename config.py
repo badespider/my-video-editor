@@ -5,6 +5,10 @@ Follows Rule 1.1: Config-Driven Design for easy model switching.
 """
 
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Environment Settings
 ENV = os.getenv('ENV', 'dev')  # 'dev', 'prod', 'test'
@@ -147,11 +151,14 @@ ADAPTIVE_MIN_SCENE_LEN = True  # Enable adaptive scene length calculation
 SCENE_VARIETY_THRESHOLD = 0.6  # Threshold for scene variety scoring
 ENHANCED_SCENE_SCORING = True  # Enable multi-factor scene scoring
 
-# Memories.ai integration (Phase 1 Rule 1.1 Placeholder)
-MEMORIES_AI_API_KEY = os.getenv("MEMORIES_AI_API_KEY", "")
-MEMORIES_AI_ENDPOINT = "https://api.memories.ai/v1"
-ENABLE_MEMORIES_AI = True  # Enable Memories.ai integration (falls back to GPT)
-memories_available = bool(MEMORIES_AI_API_KEY)  # Flag for API availability
+# Memories.ai integration (Phase 6)
+# Note: Use MEMORIES_AI_KEY to align with Rule 6.1 and .env guidance
+MEMORIES_AI_KEY = os.getenv("MEMORIES_AI_KEY", os.getenv("MEMORIES_AI_API_KEY", ""))
+MEMORIES_AI_BASE_URL = os.getenv("MEMORIES_AI_BASE_URL", "https://api.memories.ai/v1")
+# Feature flags
+USE_REAL_AI = os.getenv("USE_REAL_AI", "false").lower() == "true"  # Default False during dev per Rule 6.1
+ENABLE_MEMORIES_AI = os.getenv("ENABLE_MEMORIES_AI", "true").lower() == "true"
+memories_available = bool(MEMORIES_AI_KEY)  # Flag for API availability
 
 # Motion analysis
 ENABLE_MOTION_DETECTION = False  # Disable motion detection to avoid type errors
@@ -213,3 +220,9 @@ WS_DEFAULT_TOKEN = 'dev_token'  # Default token for development
 FRONTEND_ORIGIN = os.getenv('FRONTEND_ORIGIN', 'http://localhost:3000')
 API_BASE_URL = os.getenv('API_BASE_URL', 'http://localhost:8000')
 WS_BASE_URL = os.getenv('WS_BASE_URL', 'ws://localhost:8000')
+
+# JWT Authentication (Phase 6 Rule 6.2)
+JWT_SECRET = os.getenv('JWT_SECRET', 'dev_jwt_secret_change_in_production')
+JWT_ALGORITHM = 'HS256'
+ACCESS_TOKEN_EXPIRES_SECONDS = int(os.getenv('ACCESS_TOKEN_EXPIRES_SECONDS', '3600'))  # 1 hour
+REFRESH_TOKEN_EXPIRES_SECONDS = int(os.getenv('REFRESH_TOKEN_EXPIRES_SECONDS', '604800'))  # 7 days
